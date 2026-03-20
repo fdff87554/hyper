@@ -307,7 +307,10 @@ export function newWindow(
     console.error(`Renderer process gone: ${details.reason} (exit code: ${details.exitCode})`);
     deleteSessions();
     if (details.reason !== 'clean-exit') {
-      notify('Renderer process crashed', `The terminal renderer exited unexpectedly (${details.reason}). Please reload the window.`);
+      notify(
+        'Renderer process crashed',
+        `The terminal renderer exited unexpectedly (${details.reason}). Please reload the window.`
+      );
     }
   });
 

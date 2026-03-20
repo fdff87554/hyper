@@ -1,6 +1,7 @@
 import type {IpcMain, IpcRenderer} from 'electron';
 
 import type {ParsedSSHUrl} from '../app/utils/ssh-url';
+
 import type {configOptions} from './config';
 
 export type Session = {

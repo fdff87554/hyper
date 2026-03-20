@@ -79,10 +79,7 @@ test('escapeForShell uses PowerShell escaping for pwsh.exe', (t) => {
 });
 
 test('escapeForShell uses PowerShell escaping for powershell.exe', (t) => {
-  t.is(
-    escapeForShell("it's", 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'),
-    "'it''s'"
-  );
+  t.is(escapeForShell("it's", 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'), "'it''s'");
 });
 
 test('escapeForShell uses POSIX escaping for bash', (t) => {

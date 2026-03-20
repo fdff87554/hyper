@@ -44,11 +44,7 @@ export function resizeTermGroup(uid: string, sizes: number[]): HyperActions {
   };
 }
 
-export function requestTermGroup(
-  _activeUid: string | undefined,
-  _profile: string | undefined,
-  _cwd?: string
-) {
+export function requestTermGroup(_activeUid: string | undefined, _profile: string | undefined, _cwd?: string) {
   return (dispatch: HyperDispatch, getState: () => HyperState) => {
     dispatch({
       type: TERM_GROUP_REQUEST,
