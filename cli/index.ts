@@ -99,7 +99,7 @@ args.command(
 
 const lsRemote = async (pattern?: string) => {
   const url = `https://api.npms.io/v2/search?q=${
-    (pattern && `${pattern}+`) || ''
+    (pattern && `${encodeURIComponent(pattern)}+`) || ''
   }keywords:hyper-plugin,hyper-theme&size=250`;
   type npmResult = {package: {name: string; description: string}};
   const response = await fetch(url);
