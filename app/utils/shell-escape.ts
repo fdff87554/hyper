@@ -6,8 +6,9 @@
  * - % is doubled (%%)
  * - ! is escaped with ^! (works even with delayed expansion)
  * - " is escaped with ^"
- * The result is NOT wrapped in quotes, because cmd.exe quoting is fragile.
- * Instead we escape each dangerous character individually.
+ * The result is wrapped in double quotes after escaping each dangerous
+ * character individually, providing both character-level and quote-level
+ * protection for cmd.exe argument passing.
  */
 export function escapeCmdExe(data: string): string {
   let result = '';
