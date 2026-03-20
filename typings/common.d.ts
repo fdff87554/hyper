@@ -1,5 +1,3 @@
-import type {ExecFileOptions, ExecOptions} from 'child_process';
-
 import type {IpcMain, IpcRenderer} from 'electron';
 
 import type parseUrl from 'parse-url';
@@ -110,21 +108,13 @@ export interface TypedEmitter<Events> {
 type OptionalPromise<T> = T | Promise<T>;
 
 export type IpcCommands = {
-  'child_process.exec': (command: string, options: ExecOptions) => {stdout: string; stderr: string};
-  'child_process.execFile': (
-    file: string,
-    args: string[],
-    options: ExecFileOptions
-  ) => {
-    stdout: string;
-    stderr: string;
-  };
   getLoadedPluginVersions: () => {name: string; version: string}[];
   getPaths: () => {plugins: string[]; localPlugins: string[]};
   getBasePaths: () => {path: string; localPath: string};
   getDeprecatedConfig: () => Record<string, {css: string[]}>;
   getDecoratedConfig: (profile: string) => configOptions;
   getDecoratedKeymaps: () => Record<string, string[]>;
+  getProfileName: () => string;
 };
 
 export interface IpcMainWithCommands extends IpcMain {

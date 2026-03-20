@@ -4,7 +4,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import got from 'got';
 import registryUrlModule from 'registry-url';
 
 const registryUrl = registryUrlModule();
@@ -84,28 +83,31 @@ function getPackageName(plugin: string) {
   return nameWithoutVersion.split('@')[0];
 }
 
-function existsOnNpm(plugin: string) {
+async function existsOnNpm(plugin: string) {
   const name = getPackageName(plugin);
-  return got
-    .get<any>(registryUrl + name.toLowerCase(), {timeout: {request: 10000}, responseType: 'json'})
-    .then((res) => {
-      if (!res.body.versions) {
-        return Promise.reject(res);
-      } else {
-        return res;
-      }
-    });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(registryUrl + name.toLowerCase(), {signal: controller.signal});
+    if (!res.ok) {
+      throw new Error(`${plugin} not found on npm (registry returned ${res.status})`);
+    }
+    const body = (await res.json()) as {versions?: unknown};
+    if (!body.versions) {
+      throw new Error(`${plugin} not found on npm`);
+    }
+    return body;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function install(plugin: string, locally?: boolean) {
   const array = locally ? getLocalPlugins() : getPlugins();
   return existsOnNpm(plugin)
-    .catch((err: any) => {
-      const {statusCode} = err;
-      if (statusCode && (statusCode === 404 || statusCode === 200)) {
-        return Promise.reject(`${plugin} not found on npm`);
-      }
-      return Promise.reject(`${err.message}\nPlugin check failed. Check your internet connection or retry later.`);
+    .catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      return Promise.reject(`${message}\nPlugin check failed. Check your internet connection or retry later.`);
     })
     .then(() => {
       if (isInstalled(plugin, locally)) {
@@ -136,4 +138,21 @@ function list() {
 }
 
 export const configPath = fileName;
-export {exists, existsOnNpm, isInstalled, install, uninstall, list};
+type NpmSearchResult = {package: {name: string; description: string}};
+
+async function lsRemote(pattern?: string) {
+  const url = `https://api.npms.io/v2/search?q=${
+    (pattern && `${encodeURIComponent(pattern)}+`) || ''
+  }keywords:hyper-plugin,hyper-theme&size=250`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Plugin search failed (registry returned ${response.status})`);
+  }
+  const body = (await response.json()) as {results?: NpmSearchResult[]};
+  if (!Array.isArray(body.results)) {
+    throw new Error('Plugin search failed (unexpected response format)');
+  }
+  return body.results.map((entry) => entry.package).map(({name, description}) => ({name, description}));
+}
+
+export {exists, existsOnNpm, isInstalled, install, uninstall, list, lsRemote};

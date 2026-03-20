@@ -23,11 +23,15 @@ const Notification = forwardRef<HTMLDivElement, React.PropsWithChildren<Notifica
 
   const onElement = (el: HTMLDivElement | null) => {
     if (el) {
-      el.addEventListener('webkitTransitionEnd', () => {
-        if (dismissing) {
-          props.onDismiss();
-        }
-      });
+      el.addEventListener(
+        'webkitTransitionEnd',
+        () => {
+          if (dismissing) {
+            props.onDismiss();
+          }
+        },
+        {once: true}
+      );
       const {backgroundColor} = props;
       if (backgroundColor) {
         el.style.setProperty('background-color', backgroundColor, 'important');

@@ -1,53 +1,42 @@
-import type {ExecFileOptions, ExecOptions} from 'child_process';
+// child_process IPC bridge has been removed for security.
+// Plugins should bundle their own child_process usage in the main process via onApp hooks.
 
-import {ipcRenderer} from './ipc';
+const removedMessage = (name: string) =>
+  `child_process.${name}() is no longer available from the renderer process. ` +
+  'Plugins that need to execute commands should use the onApp hook in the main process.';
 
-export function exec(command: string, options: ExecOptions, callback: (..._args: any) => void) {
-  if (typeof options === 'function') {
-    callback = options;
-    options = {};
-  }
-  ipcRenderer.invoke('child_process.exec', command, options).then(
-    ({stdout, stderr}) => callback?.(null, stdout, stderr),
-    (error) => callback?.(error, '', '')
-  );
-}
+// Async stubs: find the last function argument and call it with an Error so callers fail fast
+// instead of silently hanging.
+const asyncStub = (name: string) =>
+  ((...args: unknown[]) => {
+    const msg = removedMessage(name);
+    console.error(msg);
+    const lastArg = args[args.length - 1];
+    if (typeof lastArg === 'function') {
+      lastArg(new Error(msg));
+    }
+  }) as (...args: unknown[]) => void;
 
-export function execSync() {
-  console.error('Calling execSync from renderer is disabled');
-}
+// Sync stubs: throw immediately, matching Node.js sync behaviour.
+const syncStub = (name: string) =>
+  ((): never => {
+    throw new Error(removedMessage(name));
+  }) as () => never;
 
-export function execFile(file: string, args: string[], options: ExecFileOptions, callback: (..._args: any) => void) {
-  if (typeof options === 'function') {
-    callback = options;
-    options = {};
-  }
-  if (typeof args === 'function') {
-    callback = args;
-    args = [];
-    options = {};
-  }
-  ipcRenderer.invoke('child_process.execFile', file, args, options).then(
-    ({stdout, stderr}) => callback?.(null, stdout, stderr),
-    (error) => callback?.(error, '', '')
-  );
-}
+// spawn returns a ChildProcess object (no callback), so we log and return undefined.
+// The caller will crash on the next property access (e.g. `.stdout.on(...)`) — fail-fast.
+const spawnStub = () => {
+  console.error(removedMessage('spawn'));
+  return undefined;
+};
 
-export function execFileSync() {
-  console.error('Calling execFileSync from renderer is disabled');
-}
-
-export function spawn() {
-  console.error('Calling spawn from renderer is disabled');
-}
-
-export function spawnSync() {
-  console.error('Calling spawnSync from renderer is disabled');
-}
-
-export function fork() {
-  console.error('Calling fork from renderer is disabled');
-}
+export const exec = asyncStub('exec');
+export const execFile = asyncStub('execFile');
+export const fork = asyncStub('fork');
+export const spawn = spawnStub;
+export const execSync = syncStub('execSync');
+export const execFileSync = syncStub('execFileSync');
+export const spawnSync = syncStub('spawnSync');
 
 const IPCChildProcess = {
   exec,

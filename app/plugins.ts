@@ -1,13 +1,10 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import {exec, execFile} from 'child_process';
-import {writeFileSync} from 'fs';
 import {resolve, basename} from 'path';
-import {promisify} from 'util';
 
-import {app, dialog, ipcMain as _ipcMain} from 'electron';
-import type {BrowserWindow, App, MenuItemConstructorOptions} from 'electron';
+import {app, BrowserWindow, dialog, ipcMain as _ipcMain} from 'electron';
+import type {App, MenuItemConstructorOptions} from 'electron';
 import React from 'react';
 
 import Config from 'electron-store';
@@ -16,12 +13,14 @@ import ReactDom from 'react-dom';
 
 import type {IpcMainWithCommands} from '../typings/common';
 import type {configOptions} from '../typings/config';
+import type {MainProcessPlugin} from '../typings/plugin';
 
 import * as config from './config';
 import {plugs} from './config/paths';
 import notify from './notify';
 import {availableExtensions} from './plugins/extensions';
 import {install} from './plugins/install';
+import {atomicWriteFileSync} from './utils/atomic-write';
 import mapKeys from './utils/map-keys';
 
 // local storage
@@ -38,7 +37,7 @@ let paths = getPaths();
 let id = getId(plugins);
 let modules = requirePlugins();
 
-function getId(plugins_: any) {
+function getId(plugins_: {plugins: string[]; localPlugins: string[]}) {
   return JSON.stringify(plugins_);
 }
 
@@ -219,7 +218,7 @@ function syncPackageJSON() {
 
   const file = resolve(path, 'package.json');
   try {
-    writeFileSync(file, JSON.stringify(pkg, null, 2));
+    atomicWriteFileSync(file, JSON.stringify(pkg, null, 2));
   } catch (err) {
     alert(`An error occurred writing to ${file}`);
   }
@@ -278,13 +277,13 @@ export const getBasePaths = () => {
   return {path, localPath};
 };
 
-function requirePlugins(): any[] {
+function requirePlugins(): MainProcessPlugin[] {
   const {plugins: plugins_, localPlugins} = paths;
 
-  const load = (path_: string) => {
-    let mod: Record<string, any>;
+  const load = (path_: string): MainProcessPlugin | undefined => {
+    let mod: MainProcessPlugin;
     try {
-      mod = require(path_);
+      mod = require(path_) as MainProcessPlugin;
       const exposed = mod && Object.keys(mod).some((key) => availableExtensions.has(key));
       if (!exposed) {
         notify('Plugin error!', `${`Plugin "${basename(path_)}" does not expose any `}Hyper extension API methods`);
@@ -318,7 +317,7 @@ function requirePlugins(): any[] {
     ...localPlugins.filter((p) => basename(p) !== 'migrated-hyper3-config')
   ]
     .map(load)
-    .filter((v): v is Record<string, any> => Boolean(v));
+    .filter((v): v is MainProcessPlugin => Boolean(v));
 }
 
 export const onApp = (app_: App) => {
@@ -365,13 +364,14 @@ export const onWindow = (win: BrowserWindow) => {
 
 // decorates the base entity by calling plugin[key]
 // for all the available plugins
-function decorateEntity(base: any, key: string, type: 'object' | 'function') {
+function decorateEntity(base: unknown, key: string, type: 'object' | 'function') {
   let decorated = base;
   modules.forEach((plugin) => {
-    if (plugin[key]) {
+    const fn = plugin[key];
+    if (typeof fn === 'function') {
       let res;
       try {
-        res = plugin[key](decorated);
+        res = (fn as (arg: unknown) => unknown)(decorated);
       } catch (e) {
         notify('Plugin error!', `"${plugin._name}" when decorating ${key}`, {error: e});
         return;
@@ -391,7 +391,7 @@ function decorateObject<T>(base: T, key: string): T {
   return decorateEntity(base, key, 'object');
 }
 
-function decorateClass(base: any, key: string) {
+function decorateClass(base: unknown, key: string) {
   return decorateEntity(base, key, 'function');
 }
 
@@ -405,7 +405,7 @@ export const getDeprecatedConfig = () => {
     // We need to clone config in case of plugin modifies config directly.
     let configTmp: configOptions;
     try {
-      configTmp = plugin.decorateConfig(JSON.parse(JSON.stringify(baseConfig)));
+      configTmp = plugin.decorateConfig(JSON.parse(JSON.stringify(baseConfig)) as configOptions);
     } catch (e) {
       notify('Plugin error!', `"${plugin._name}" has encountered an error. Check Developer Tools for details.`, {
         error: e
@@ -464,13 +464,8 @@ export {toDependencies as _toDependencies};
 
 const ipcMain = _ipcMain as IpcMainWithCommands;
 
-ipcMain.handle('child_process.exec', (event, command, options) => {
-  return promisify(exec)(command, options);
-});
-
-ipcMain.handle('child_process.execFile', (event, file, args, options) => {
-  return promisify(execFile)(file, args, options);
-});
+// Generic child_process IPC handlers removed for security.
+// Plugins should not execute arbitrary commands through the renderer-to-main bridge.
 
 ipcMain.handle('getLoadedPluginVersions', () => getLoadedPluginVersions());
 ipcMain.handle('getPaths', () => getPaths());
@@ -478,3 +473,29 @@ ipcMain.handle('getBasePaths', () => getBasePaths());
 ipcMain.handle('getDeprecatedConfig', () => getDeprecatedConfig());
 ipcMain.handle('getDecoratedConfig', (e, profile) => getDecoratedConfig(profile));
 ipcMain.handle('getDecoratedKeymaps', () => getDecoratedKeymaps());
+ipcMain.handle('getProfileName', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  return win?.profileName ?? 'default';
+});
+
+// Synchronous IPC handlers for renderer initialization.
+// These replace @electron/remote synchronous calls.
+_ipcMain.on('getLoadedPluginVersionsSync', (event) => {
+  event.returnValue = getLoadedPluginVersions();
+});
+_ipcMain.on('getPathsSync', (event) => {
+  event.returnValue = getPaths();
+});
+_ipcMain.on('getBasePathsSync', (event) => {
+  event.returnValue = getBasePaths();
+});
+_ipcMain.on('getDeprecatedConfigSync', (event) => {
+  event.returnValue = getDeprecatedConfig();
+});
+_ipcMain.on('getDecoratedConfigSync', (event, profile: string) => {
+  event.returnValue = getDecoratedConfig(profile);
+});
+_ipcMain.on('getProfileNameSync', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  event.returnValue = win?.profileName ?? 'default';
+});

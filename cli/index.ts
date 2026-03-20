@@ -1,15 +1,13 @@
 // This is a CLI tool, using console is OK
 /* eslint no-console: 0 */
-import {spawn, exec} from 'child_process';
+import {spawn, execFile} from 'child_process';
 import type {SpawnOptions} from 'child_process';
 import {existsSync} from 'fs';
 import {isAbsolute, resolve} from 'path';
-import {promisify} from 'util';
 
 import args from 'args';
 import chalk from 'chalk';
 import _columnify from 'columnify';
-import got from 'got';
 import open from 'open';
 import ora from 'ora';
 
@@ -99,22 +97,6 @@ args.command(
   ['ls']
 );
 
-const lsRemote = (pattern?: string) => {
-  // note that no errors are catched by this function
-  const URL = `https://api.npms.io/v2/search?q=${
-    (pattern && `${pattern}+`) || ''
-  }keywords:hyper-plugin,hyper-theme&size=250`;
-  type npmResult = {package: {name: string; description: string}};
-  return got(URL)
-    .then((response) => JSON.parse(response.body).results as npmResult[])
-    .then((entries) => entries.map((entry) => entry.package))
-    .then((entries) =>
-      entries.map(({name, description}) => {
-        return {name, description};
-      })
-    );
-};
-
 args.command(
   'search',
   'Search for plugins on npm',
@@ -122,7 +104,8 @@ args.command(
     const spinner = ora('Searching').start();
     const query = args_[0] ? args_[0].toLowerCase() : '';
 
-    commandPromise = lsRemote(query)
+    commandPromise = api
+      .lsRemote(query)
       .then((entries) => {
         if (entries.length === 0) {
           spinner.fail();
@@ -137,7 +120,7 @@ args.command(
       })
       .catch((err) => {
         spinner.fail();
-        console.error(chalk.red(err)); // TODO
+        console.error(chalk.red(err));
       });
   },
   ['s']
@@ -149,7 +132,8 @@ args.command(
   () => {
     const spinner = ora('Searching').start();
 
-    commandPromise = lsRemote()
+    commandPromise = api
+      .lsRemote()
       .then((entries) => {
         const msg = columnify(entries);
         spinner.succeed();
@@ -157,7 +141,7 @@ args.command(
       })
       .catch((err) => {
         spinner.fail();
-        console.error(chalk.red(err)); // TODO
+        console.error(chalk.red(err));
       });
   },
   ['lsr', 'ls-remote']
@@ -234,11 +218,12 @@ const main = (argv: string[]) => {
     options['stdio'] = 'ignore';
     if (process.platform === 'darwin') {
       //Use `open` to prevent multiple Hyper process
-      const cmd = `open -b co.zeit.hyper ${args_}`;
-      const opts = {
-        env
-      };
-      return promisify(exec)(cmd, opts);
+      return new Promise<void>((resolve, reject) => {
+        execFile('open', ['-b', 'co.zeit.hyper', ...args_], {env}, (error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
     }
   }
 

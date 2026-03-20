@@ -1,11 +1,10 @@
 import {existsSync} from 'fs';
-import {isAbsolute, normalize, sep} from 'path';
+import {isAbsolute, join, normalize, sep} from 'path';
 import {URL, fileURLToPath} from 'url';
 
 import {app, BrowserWindow, shell, Menu} from 'electron';
 import type {BrowserWindowConstructorOptions} from 'electron';
 
-import {enable as remoteEnable} from '@electron/remote/main';
 import isDev from 'electron-is-dev';
 import {getWorkingDirectoryFromPID} from 'native-process-working-directory';
 import {v4 as uuidv4} from 'uuid';
@@ -23,6 +22,7 @@ import Session from '../session';
 import updater from '../updater';
 import {setRendererType, unsetRendererType} from '../utils/renderer-utils';
 import toElectronBackgroundColor from '../utils/to-electron-background-color';
+import {isSafeExternalUrl} from '../utils/url-validation';
 
 import contextMenuTemplate from './contextmenu';
 
@@ -48,8 +48,9 @@ export function newWindow(
     show: Boolean(process.env.HYPER_DEBUG || process.env.HYPERTERM_DEBUG || isDev),
     acceptFirstMouse: true,
     webPreferences: {
+      preload: join(__dirname, 'preload.js'),
       nodeIntegration: true,
-      navigateOnDragDrop: true,
+      navigateOnDragDrop: false,
       contextIsolation: false
     },
     ...options_
@@ -57,9 +58,6 @@ export function newWindow(
   const window = new BrowserWindow(app.plugins.getDecoratedBrowserOptions(winOpts));
 
   window.profileName = profileName;
-
-  // Enable remote module on this window
-  remoteEnable(window.webContents);
 
   window.uid = classOpts.uid;
 
@@ -245,7 +243,11 @@ export function newWindow(
     setRendererType(uid, type);
   });
   rpc.on('open external', ({url}) => {
-    void shell.openExternal(url);
+    if (isSafeExternalUrl(url)) {
+      void shell.openExternal(url);
+    } else {
+      console.warn(`Blocked opening URL with disallowed protocol: ${url}`);
+    }
   });
   rpc.on('open context menu', (selection) => {
     const {createWindow} = app;

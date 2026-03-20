@@ -28,7 +28,6 @@
     "email": "team@zeit.co"
   },
   "dependencies": {
-    "@electron/remote": "2.1.2",
     "@react-icons/all-files": "4.1.0",
     "@redux-devtools/extension": "^3.3.0",
     "args": "5.0.3",
@@ -37,7 +36,6 @@
     "color": "4.2.3",
     "columnify": "1.6.0",
     "css-loader": "7.1.1",
-    "got": "12.4.1",
     "json-loader": "0.5.7",
     "lodash": "4.17.21",
     "mousetrap": "chabou/mousetrap#useCapture",
