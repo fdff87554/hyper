@@ -69,8 +69,8 @@ const mapDispatchToProps = (dispatch: HyperDispatch) => {
       dispatch(setSessionXtermTitle(uid, title));
     },
 
-    onCwd(cwd: string) {
-      dispatch(setSessionCwd(cwd));
+    onCwd(uid: string, cwd: string) {
+      dispatch(setSessionCwd(uid, cwd));
     },
 
     onResize(uid: string, cols: number, rows: number) {

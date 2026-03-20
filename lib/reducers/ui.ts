@@ -386,7 +386,9 @@ const reducer: IUiReducer = (state = initial, action) => {
       break;
 
     case SESSION_SET_CWD:
-      state_ = state.set('cwd', action.cwd);
+      if (action.uid === state.activeUid) {
+        state_ = state.set('cwd', action.cwd);
+      }
       break;
 
     case UI_FONT_SIZE_SET:

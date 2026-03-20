@@ -96,7 +96,7 @@ class TermGroup_ extends React.PureComponent<TermGroupProps> {
       onActive: this.bind(this.props.onActive, null, uid),
       onResize: this.bind(this.props.onResize, null, uid),
       onTitle: this.bind(this.props.onTitle, null, uid),
-      onCwd: this.props.onCwd,
+      onCwd: this.bind(this.props.onCwd!, null, uid),
       onData: this.bind(this.props.onData, null, uid),
       onOpenSearch: this.bind(this.props.onOpenSearch, null, uid),
       onCloseSearch: this.bind(this.props.onCloseSearch, null, uid),

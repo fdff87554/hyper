@@ -116,9 +116,10 @@ export function setSessionXtermTitle(uid: string, title: string): HyperActions {
   };
 }
 
-export function setSessionCwd(cwd: string): HyperActions {
+export function setSessionCwd(uid: string, cwd: string): HyperActions {
   return {
     type: SESSION_SET_CWD,
+    uid,
     cwd
   };
 }
