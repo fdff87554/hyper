@@ -1,7 +1,6 @@
 import type {IpcMain, IpcRenderer} from 'electron';
 
-import type parseUrl from 'parse-url';
-
+import type {ParsedSSHUrl} from '../app/utils/ssh-url';
 import type {configOptions} from './config';
 
 export type Session = {
@@ -49,7 +48,7 @@ export type RendererEvents = {
   ready: never;
   'add notification': {text: string; url: string; dismissable: boolean};
   'update available': {releaseNotes: string; releaseName: string; releaseUrl: string; canInstall: boolean};
-  'open ssh': ReturnType<typeof parseUrl>;
+  'open ssh': ParsedSSHUrl;
   'open file': {path: string};
   'move jump req': number | 'last';
   'reset fontSize req': never;

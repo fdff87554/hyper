@@ -3,8 +3,6 @@ require('color-string');
 require('columnify');
 require('lodash');
 require('ms');
-require('normalize-url');
-require('parse-url');
 require('php-escape-shell');
 require('plist');
 require('redux-thunk');
