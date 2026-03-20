@@ -89,9 +89,12 @@ async function existsOnNpm(plugin: string) {
   const timeout = setTimeout(() => controller.abort(), 10000);
   try {
     const res = await fetch(registryUrl + name.toLowerCase(), {signal: controller.signal});
+    if (!res.ok) {
+      throw new Error(`${plugin} not found on npm (registry returned ${res.status})`);
+    }
     const body = (await res.json()) as {versions?: unknown};
     if (!body.versions) {
-      return Promise.reject(body);
+      throw new Error(`${plugin} not found on npm`);
     }
     return body;
   } finally {
@@ -102,12 +105,9 @@ async function existsOnNpm(plugin: string) {
 function install(plugin: string, locally?: boolean) {
   const array = locally ? getLocalPlugins() : getPlugins();
   return existsOnNpm(plugin)
-    .catch((err: any) => {
-      const {statusCode} = err;
-      if (statusCode && (statusCode === 404 || statusCode === 200)) {
-        return Promise.reject(`${plugin} not found on npm`);
-      }
-      return Promise.reject(`${err.message}\nPlugin check failed. Check your internet connection or retry later.`);
+    .catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      return Promise.reject(`${message}\nPlugin check failed. Check your internet connection or retry later.`);
     })
     .then(() => {
       if (isInstalled(plugin, locally)) {
