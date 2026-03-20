@@ -1,10 +1,9 @@
 // This is a CLI tool, using console is OK
 /* eslint no-console: 0 */
-import {spawn, exec} from 'child_process';
+import {spawn, execFile} from 'child_process';
 import type {SpawnOptions} from 'child_process';
 import {existsSync} from 'fs';
 import {isAbsolute, resolve} from 'path';
-import {promisify} from 'util';
 
 import args from 'args';
 import chalk from 'chalk';
@@ -234,11 +233,12 @@ const main = (argv: string[]) => {
     options['stdio'] = 'ignore';
     if (process.platform === 'darwin') {
       //Use `open` to prevent multiple Hyper process
-      const cmd = `open -b co.zeit.hyper ${args_}`;
-      const opts = {
-        env
-      };
-      return promisify(exec)(cmd, opts);
+      return new Promise<void>((resolve, reject) => {
+        execFile('open', ['-b', 'co.zeit.hyper', ...args_], {env}, (error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
     }
   }
 
