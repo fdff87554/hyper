@@ -2,6 +2,7 @@ import type {HyperState, HyperDispatch} from '../../typings/hyper';
 import {
   resizeSession,
   sendSessionData,
+  setSessionCwd,
   setSessionXtermTitle,
   setActiveSession,
   openSearch,
@@ -66,6 +67,10 @@ const mapDispatchToProps = (dispatch: HyperDispatch) => {
 
     onTitle(uid: string, title: string) {
       dispatch(setSessionXtermTitle(uid, title));
+    },
+
+    onCwd(cwd: string) {
+      dispatch(setSessionCwd(cwd));
     },
 
     onResize(uid: string, cols: number, rows: number) {

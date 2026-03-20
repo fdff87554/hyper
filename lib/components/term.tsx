@@ -292,6 +292,27 @@ export default class Term extends React.PureComponent<
       props.onResize(this.term.cols, this.term.rows);
     }
 
+    // OSC 7: Current Working Directory reporting
+    // Shells emit \e]7;file://hostname/path\a when the CWD changes.
+    if (props.onCwd) {
+      this.disposableListeners.push(
+        this.term.parser.registerOscHandler(7, (data) => {
+          try {
+            const url = new URL(data);
+            if (url.protocol === 'file:') {
+              const cwd = decodeURIComponent(url.pathname);
+              if (cwd) {
+                props.onCwd!(cwd);
+              }
+            }
+          } catch {
+            // Ignore malformed OSC 7 data
+          }
+          return true;
+        })
+      );
+    }
+
     if (props.onCursorMove) {
       this.disposableListeners.push(
         this.term.onCursorMove(() => {

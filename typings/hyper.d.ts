@@ -309,6 +309,7 @@ export type TermGroupOwnProps = {
   | 'onActive'
   | 'onContextMenu'
   | 'onCloseSearch'
+  | 'onCwd'
   | 'onData'
   | 'onOpenSearch'
   | 'onResize'
@@ -381,6 +382,7 @@ export type TermProps = {
   onCloseSearch: () => void;
   onContextMenu: (selection: any) => void;
   onCursorMove?: (cursorFrame: {x: number; y: number; width: number; height: number; col: number; row: number}) => void;
+  onCwd?: (cwd: string) => void;
   onData: (data: string) => void;
   onOpenSearch: () => void;
   onResize: (cols: number, rows: number) => void;
