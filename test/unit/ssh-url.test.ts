@@ -99,3 +99,35 @@ test('builds SSH command with username and port', (t) => {
 test('builds SSH command with only port', (t) => {
   t.is(buildSSHCommand({hostname: 'host.example.com', username: '', port: '22'}), 'ssh host.example.com -p 22');
 });
+
+// IPv6 support
+test('parses ssh URL with IPv6 address', (t) => {
+  const result = parseSSHUrl('ssh://[2001:db8::1]');
+  t.deepEqual(result, {hostname: '2001:db8::1', username: '', port: ''});
+});
+
+test('parses ssh URL with IPv6 address and port', (t) => {
+  const result = parseSSHUrl('ssh://[2001:db8::1]:2222');
+  t.deepEqual(result, {hostname: '2001:db8::1', username: '', port: '2222'});
+});
+
+test('parses ssh URL with IPv6 address and username', (t) => {
+  const result = parseSSHUrl('ssh://user@[::1]');
+  t.deepEqual(result, {hostname: '::1', username: 'user', port: ''});
+});
+
+test('parses ssh URL with IPv6 loopback', (t) => {
+  const result = parseSSHUrl('ssh://[::1]:22');
+  t.deepEqual(result, {hostname: '::1', username: '', port: '22'});
+});
+
+test('builds SSH command with IPv6 address', (t) => {
+  t.is(buildSSHCommand({hostname: '2001:db8::1', username: '', port: ''}), 'ssh 2001:db8::1');
+});
+
+test('builds SSH command with IPv6 address and username and port', (t) => {
+  t.is(
+    buildSSHCommand({hostname: '2001:db8::1', username: 'user', port: '2222'}),
+    'ssh user@2001:db8::1 -p 2222'
+  );
+});

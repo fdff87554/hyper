@@ -1,4 +1,5 @@
 const VALID_HOSTNAME = /^[a-zA-Z0-9._-]+$/;
+const VALID_IPV6 = /^\[[\da-fA-F:]+\]$/;
 const VALID_USERNAME = /^[a-zA-Z0-9._-]*$/;
 
 export type ParsedSSHUrl = {
@@ -19,9 +20,12 @@ export function parseSSHUrl(sshUrl: string): ParsedSSHUrl | null {
     return null;
   }
 
-  const hostname = parsed.hostname;
-  if (!hostname || !VALID_HOSTNAME.test(hostname)) {
+  let hostname = parsed.hostname;
+  if (!hostname || (!VALID_HOSTNAME.test(hostname) && !VALID_IPV6.test(hostname))) {
     return null;
+  }
+  if (VALID_IPV6.test(hostname)) {
+    hostname = hostname.slice(1, -1);
   }
 
   const username = decodeURIComponent(parsed.username);
