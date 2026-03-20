@@ -294,11 +294,13 @@ export default class Term extends React.PureComponent<
     if (props.onCursorMove) {
       this.disposableListeners.push(
         this.term.onCursorMove(() => {
+          const cellWidth = this.getCellDimensions().width;
+          const cellHeight = this.getCellDimensions().height;
           const cursorFrame = {
-            x: this.term.buffer.active.cursorX * (this.term as any)._core._renderService.dimensions.actualCellWidth,
-            y: this.term.buffer.active.cursorY * (this.term as any)._core._renderService.dimensions.actualCellHeight,
-            width: (this.term as any)._core._renderService.dimensions.actualCellWidth,
-            height: (this.term as any)._core._renderService.dimensions.actualCellHeight,
+            x: this.term.buffer.active.cursorX * cellWidth,
+            y: this.term.buffer.active.cursorY * cellHeight,
+            width: cellWidth,
+            height: cellHeight,
             col: this.term.buffer.active.cursorX,
             row: this.term.buffer.active.cursorY
           };
@@ -321,6 +323,21 @@ export default class Term extends React.PureComponent<
     });
 
     terms[this.props.uid] = this;
+  }
+
+  getCellDimensions(): {width: number; height: number} {
+    const termElement = this.term.element;
+    if (termElement && this.term.cols > 0 && this.term.rows > 0) {
+      // Calculate cell dimensions from the terminal viewport
+      const viewport = termElement.querySelector('.xterm-screen');
+      if (viewport) {
+        return {
+          width: viewport.clientWidth / this.term.cols,
+          height: viewport.clientHeight / this.term.rows
+        };
+      }
+    }
+    return {width: 0, height: 0};
   }
 
   getTermDocument() {
