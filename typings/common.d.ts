@@ -77,7 +77,7 @@ export type RendererEvents = {
   'session clear req': never;
   'split request horizontal': {activeUid?: string; profile?: string};
   'split request vertical': {activeUid?: string; profile?: string};
-  'termgroup add req': {activeUid?: string; profile?: string};
+  'termgroup add req': {activeUid?: string; profile?: string; cwd?: string};
   'termgroup close req': never;
   'session add': Session;
   'session data': string;

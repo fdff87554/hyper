@@ -44,13 +44,17 @@ export function resizeTermGroup(uid: string, sizes: number[]): HyperActions {
   };
 }
 
-export function requestTermGroup(_activeUid: string | undefined, _profile: string | undefined) {
+export function requestTermGroup(
+  _activeUid: string | undefined,
+  _profile: string | undefined,
+  _cwd?: string
+) {
   return (dispatch: HyperDispatch, getState: () => HyperState) => {
     dispatch({
       type: TERM_GROUP_REQUEST,
       effect: () => {
         const {ui, sessions} = getState();
-        const {cwd} = ui;
+        const cwd = _cwd || ui.cwd;
         const activeUid = _activeUid ? _activeUid : sessions.activeUid;
         const profile = _profile ? _profile : activeUid ? sessions.sessions[activeUid].profile : window.profileName;
         rpc.emit('new', {

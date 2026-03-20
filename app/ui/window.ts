@@ -97,9 +97,23 @@ export function newWindow(
     // If no callback is passed to createWindow,
     // a new session will be created by default.
     if (!fn) {
-      fn = (win: BrowserWindow) => {
-        win.rpc.emit('termgroup add req', {});
-      };
+      // Restore persisted tabs if available
+      const persistedTabs = app.config.getPersistedTabs();
+      if (persistedTabs.length > 0) {
+        fn = (win: BrowserWindow) => {
+          // Create first tab
+          win.rpc.emit('termgroup add req', {cwd: persistedTabs[0].cwd});
+          // Create additional tabs
+          for (let i = 1; i < persistedTabs.length; i++) {
+            win.rpc.emit('termgroup add req', {cwd: persistedTabs[i].cwd});
+          }
+        };
+        app.config.clearPersistedTabs();
+      } else {
+        fn = (win: BrowserWindow) => {
+          win.rpc.emit('termgroup add req', {});
+        };
+      }
     }
 
     // app.windowCallback is the createWindow callback

@@ -129,7 +129,13 @@ export const setup = () => {
   checkDeprecatedConfig();
 };
 
-export {get as getWin, recordState as winRecord, defaults as windowDefaults} from './config/windows';
+export {
+  get as getWin,
+  recordState as winRecord,
+  defaults as windowDefaults,
+  getPersistedTabs,
+  clearPersistedTabs
+} from './config/windows';
 
 export const fixConfigDefaults = (decoratedConfig: configOptions) => {
   const defaultConfig = getDefaultConfig().config!;
