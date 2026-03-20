@@ -13,6 +13,7 @@ import ReactDom from 'react-dom';
 
 import type {IpcMainWithCommands} from '../typings/common';
 import type {configOptions} from '../typings/config';
+import type {MainProcessPlugin} from '../typings/plugin';
 
 import * as config from './config';
 import {plugs} from './config/paths';
@@ -36,7 +37,7 @@ let paths = getPaths();
 let id = getId(plugins);
 let modules = requirePlugins();
 
-function getId(plugins_: any) {
+function getId(plugins_: {plugins: string[]; localPlugins: string[]}) {
   return JSON.stringify(plugins_);
 }
 
@@ -276,13 +277,13 @@ export const getBasePaths = () => {
   return {path, localPath};
 };
 
-function requirePlugins(): any[] {
+function requirePlugins(): MainProcessPlugin[] {
   const {plugins: plugins_, localPlugins} = paths;
 
-  const load = (path_: string) => {
-    let mod: Record<string, any>;
+  const load = (path_: string): MainProcessPlugin | undefined => {
+    let mod: MainProcessPlugin;
     try {
-      mod = require(path_);
+      mod = require(path_) as MainProcessPlugin;
       const exposed = mod && Object.keys(mod).some((key) => availableExtensions.has(key));
       if (!exposed) {
         notify('Plugin error!', `${`Plugin "${basename(path_)}" does not expose any `}Hyper extension API methods`);
@@ -316,7 +317,7 @@ function requirePlugins(): any[] {
     ...localPlugins.filter((p) => basename(p) !== 'migrated-hyper3-config')
   ]
     .map(load)
-    .filter((v): v is Record<string, any> => Boolean(v));
+    .filter((v): v is MainProcessPlugin => Boolean(v));
 }
 
 export const onApp = (app_: App) => {
@@ -363,13 +364,14 @@ export const onWindow = (win: BrowserWindow) => {
 
 // decorates the base entity by calling plugin[key]
 // for all the available plugins
-function decorateEntity(base: any, key: string, type: 'object' | 'function') {
+function decorateEntity(base: unknown, key: string, type: 'object' | 'function') {
   let decorated = base;
   modules.forEach((plugin) => {
-    if (plugin[key]) {
+    const fn = plugin[key];
+    if (typeof fn === 'function') {
       let res;
       try {
-        res = plugin[key](decorated);
+        res = (fn as (arg: unknown) => unknown)(decorated);
       } catch (e) {
         notify('Plugin error!', `"${plugin._name}" when decorating ${key}`, {error: e});
         return;
@@ -389,7 +391,7 @@ function decorateObject<T>(base: T, key: string): T {
   return decorateEntity(base, key, 'object');
 }
 
-function decorateClass(base: any, key: string) {
+function decorateClass(base: unknown, key: string) {
   return decorateEntity(base, key, 'function');
 }
 
@@ -403,7 +405,7 @@ export const getDeprecatedConfig = () => {
     // We need to clone config in case of plugin modifies config directly.
     let configTmp: configOptions;
     try {
-      configTmp = plugin.decorateConfig(JSON.parse(JSON.stringify(baseConfig)));
+      configTmp = plugin.decorateConfig(JSON.parse(JSON.stringify(baseConfig)) as configOptions);
     } catch (e) {
       notify('Plugin error!', `"${plugin._name}" has encountered an error. Check Developer Tools for details.`, {
         error: e
