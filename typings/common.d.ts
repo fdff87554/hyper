@@ -114,6 +114,7 @@ export type IpcCommands = {
   getDeprecatedConfig: () => Record<string, {css: string[]}>;
   getDecoratedConfig: (profile: string) => configOptions;
   getDecoratedKeymaps: () => Record<string, string[]>;
+  getProfileName: () => string;
 };
 
 export interface IpcMainWithCommands extends IpcMain {

@@ -3,8 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import {resolve, basename} from 'path';
 
-import {app, dialog, ipcMain as _ipcMain} from 'electron';
-import type {BrowserWindow, App, MenuItemConstructorOptions} from 'electron';
+import {app, BrowserWindow, dialog, ipcMain as _ipcMain} from 'electron';
+import type {App, MenuItemConstructorOptions} from 'electron';
 import React from 'react';
 
 import Config from 'electron-store';
@@ -471,3 +471,7 @@ ipcMain.handle('getBasePaths', () => getBasePaths());
 ipcMain.handle('getDeprecatedConfig', () => getDeprecatedConfig());
 ipcMain.handle('getDecoratedConfig', (e, profile) => getDecoratedConfig(profile));
 ipcMain.handle('getDecoratedKeymaps', () => getDecoratedKeymaps());
+ipcMain.handle('getProfileName', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  return win?.profileName ?? 'default';
+});

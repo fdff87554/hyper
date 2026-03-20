@@ -1,5 +1,5 @@
 import {existsSync} from 'fs';
-import {isAbsolute, normalize, sep} from 'path';
+import {isAbsolute, join, normalize, sep} from 'path';
 import {URL, fileURLToPath} from 'url';
 
 import {app, BrowserWindow, shell, Menu} from 'electron';
@@ -49,6 +49,7 @@ export function newWindow(
     show: Boolean(process.env.HYPER_DEBUG || process.env.HYPERTERM_DEBUG || isDev),
     acceptFirstMouse: true,
     webPreferences: {
+      preload: join(__dirname, 'preload.js'),
       nodeIntegration: true,
       navigateOnDragDrop: false,
       contextIsolation: false
