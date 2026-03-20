@@ -4,7 +4,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import got from 'got';
 import registryUrlModule from 'registry-url';
 
 const registryUrl = registryUrlModule();
@@ -84,17 +83,20 @@ function getPackageName(plugin: string) {
   return nameWithoutVersion.split('@')[0];
 }
 
-function existsOnNpm(plugin: string) {
+async function existsOnNpm(plugin: string) {
   const name = getPackageName(plugin);
-  return got
-    .get<any>(registryUrl + name.toLowerCase(), {timeout: {request: 10000}, responseType: 'json'})
-    .then((res) => {
-      if (!res.body.versions) {
-        return Promise.reject(res);
-      } else {
-        return res;
-      }
-    });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(registryUrl + name.toLowerCase(), {signal: controller.signal});
+    const body = (await res.json()) as {versions?: unknown};
+    if (!body.versions) {
+      return Promise.reject(body);
+    }
+    return body;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function install(plugin: string, locally?: boolean) {

@@ -8,7 +8,6 @@ import {isAbsolute, resolve} from 'path';
 import args from 'args';
 import chalk from 'chalk';
 import _columnify from 'columnify';
-import got from 'got';
 import open from 'open';
 import ora from 'ora';
 
@@ -98,20 +97,14 @@ args.command(
   ['ls']
 );
 
-const lsRemote = (pattern?: string) => {
-  // note that no errors are catched by this function
-  const URL = `https://api.npms.io/v2/search?q=${
+const lsRemote = async (pattern?: string) => {
+  const url = `https://api.npms.io/v2/search?q=${
     (pattern && `${pattern}+`) || ''
   }keywords:hyper-plugin,hyper-theme&size=250`;
   type npmResult = {package: {name: string; description: string}};
-  return got(URL)
-    .then((response) => JSON.parse(response.body).results as npmResult[])
-    .then((entries) => entries.map((entry) => entry.package))
-    .then((entries) =>
-      entries.map(({name, description}) => {
-        return {name, description};
-      })
-    );
+  const response = await fetch(url);
+  const body = (await response.json()) as {results: npmResult[]};
+  return body.results.map((entry) => entry.package).map(({name, description}) => ({name, description}));
 };
 
 args.command(
