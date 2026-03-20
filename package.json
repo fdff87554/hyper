@@ -1,7 +1,7 @@
 {
   "name": "hyper",
   "version": "4.0.0-canary.5",
-  "repository": "zeit/hyper",
+  "repository": "fdff87554/hyper",
   "scripts": {
     "start": "echo 'please run `yarn run dev` in one tab and then `yarn run app` in another one'",
     "app": "cross-env ELECTRONMON_LOGLEVEL=error electronmon target",
@@ -24,8 +24,8 @@
   },
   "license": "MIT",
   "author": {
-    "name": "ZEIT, Inc.",
-    "email": "team@zeit.co"
+    "name": "fdff87554",
+    "url": "https://github.com/fdff87554"
   },
   "dependencies": {
     "@react-icons/all-files": "4.1.0",

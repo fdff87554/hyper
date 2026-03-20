@@ -5,10 +5,10 @@
   "version": "4.0.0-canary.5",
   "license": "MIT",
   "author": {
-    "name": "ZEIT, Inc.",
-    "email": "team@zeit.co"
+    "name": "fdff87554",
+    "url": "https://github.com/fdff87554"
   },
-  "repository": "zeit/hyper",
+  "repository": "fdff87554/hyper",
   "scripts": {
     "postinstall": "npx patch-package"
   },

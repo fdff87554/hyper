@@ -210,9 +210,9 @@ function syncPackageJSON() {
     description: 'Auto-generated from `hyper.json`!',
     private: true,
     version: '0.0.1',
-    repository: 'vercel/hyper',
+    repository: 'fdff87554/hyper',
     license: 'MIT',
-    homepage: 'https://hyper.is',
+    homepage: 'https://github.com/fdff87554/hyper',
     dependencies
   };
 
