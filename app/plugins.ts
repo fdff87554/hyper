@@ -1,10 +1,8 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import {exec, execFile} from 'child_process';
 import {writeFileSync} from 'fs';
 import {resolve, basename} from 'path';
-import {promisify} from 'util';
 
 import {app, dialog, ipcMain as _ipcMain} from 'electron';
 import type {BrowserWindow, App, MenuItemConstructorOptions} from 'electron';
@@ -464,13 +462,8 @@ export {toDependencies as _toDependencies};
 
 const ipcMain = _ipcMain as IpcMainWithCommands;
 
-ipcMain.handle('child_process.exec', (event, command, options) => {
-  return promisify(exec)(command, options);
-});
-
-ipcMain.handle('child_process.execFile', (event, file, args, options) => {
-  return promisify(execFile)(file, args, options);
-});
+// Generic child_process IPC handlers removed for security.
+// Plugins should not execute arbitrary commands through the renderer-to-main bridge.
 
 ipcMain.handle('getLoadedPluginVersions', () => getLoadedPluginVersions());
 ipcMain.handle('getPaths', () => getPaths());
