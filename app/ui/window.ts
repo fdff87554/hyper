@@ -5,7 +5,6 @@ import {URL, fileURLToPath} from 'url';
 import {app, BrowserWindow, shell, Menu} from 'electron';
 import type {BrowserWindowConstructorOptions} from 'electron';
 
-import {enable as remoteEnable} from '@electron/remote/main';
 import isDev from 'electron-is-dev';
 import {getWorkingDirectoryFromPID} from 'native-process-working-directory';
 import {v4 as uuidv4} from 'uuid';
@@ -59,9 +58,6 @@ export function newWindow(
   const window = new BrowserWindow(app.plugins.getDecoratedBrowserOptions(winOpts));
 
   window.profileName = profileName;
-
-  // Enable remote module on this window
-  remoteEnable(window.webContents);
 
   window.uid = classOpts.uid;
 

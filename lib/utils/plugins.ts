@@ -3,11 +3,10 @@
 import ChildProcess from 'child_process';
 import pathModule from 'path';
 
+import {ipcRenderer as _ipcRenderer} from 'electron';
 import React, {PureComponent} from 'react';
 import type {ComponentType} from 'react';
 
-import {require as remoteRequire} from '@electron/remote';
-// TODO: Should be updates to new async API https://medium.com/@nornagon/electrons-remote-module-considered-harmful-70d69500f31
 import ReactDOM from 'react-dom';
 import {connect as reduxConnect} from 'react-redux';
 import type {ConnectOptions} from 'react-redux/es/components/connect';
@@ -33,8 +32,14 @@ import IPCChildProcess from './ipc-child-process';
 import notify from './notify';
 import {ObjectTypedKeys} from './object';
 
-// remote interface to `../plugins`
-const plugins = remoteRequire('./plugins') as typeof import('../../app/plugins');
+// Synchronous IPC bridge replacing @electron/remote
+const plugins = {
+  getBasePaths: () => _ipcRenderer.sendSync('getBasePathsSync') as {path: string; localPath: string},
+  getPaths: () => _ipcRenderer.sendSync('getPathsSync') as {plugins: string[]; localPlugins: string[]},
+  getLoadedPluginVersions: () =>
+    _ipcRenderer.sendSync('getLoadedPluginVersionsSync') as {name: string; version: string}[],
+  getDeprecatedConfig: () => _ipcRenderer.sendSync('getDeprecatedConfigSync') as Record<string, {css: string[]}>
+};
 
 // `require`d modules
 let modules: hyperPlugin[];

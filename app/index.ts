@@ -11,11 +11,6 @@ if (['--help', '-v', '--version'].includes(process.argv[1])) {
   process.exit();
 }
 
-// Enable remote module
-// eslint-disable-next-line import/order
-import {initialize as remoteInitialize} from '@electron/remote/main';
-remoteInitialize();
-
 // set up config
 // eslint-disable-next-line import/order
 import * as config from './config';

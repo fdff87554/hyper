@@ -475,3 +475,25 @@ ipcMain.handle('getProfileName', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   return win?.profileName ?? 'default';
 });
+
+// Synchronous IPC handlers for renderer initialization.
+// These replace @electron/remote synchronous calls.
+_ipcMain.on('getLoadedPluginVersionsSync', (event) => {
+  event.returnValue = getLoadedPluginVersions();
+});
+_ipcMain.on('getPathsSync', (event) => {
+  event.returnValue = getPaths();
+});
+_ipcMain.on('getBasePathsSync', (event) => {
+  event.returnValue = getBasePaths();
+});
+_ipcMain.on('getDeprecatedConfigSync', (event) => {
+  event.returnValue = getDeprecatedConfig();
+});
+_ipcMain.on('getDecoratedConfigSync', (event, profile: string) => {
+  event.returnValue = getDecoratedConfig(profile);
+});
+_ipcMain.on('getProfileNameSync', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  event.returnValue = win?.profileName ?? 'default';
+});
