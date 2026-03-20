@@ -91,3 +91,72 @@ test('existsOnNpm() rejects when versions field is missing', async (t) => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test('lsRemote() rejects on non-ok response', async (t) => {
+  const {lsRemote} = proxyquire('../../cli/api', {
+    'registry-url': () => 'https://registry.npmjs.org/'
+  });
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (() => Promise.resolve({ok: false, status: 429})) as any;
+
+  try {
+    await t.throwsAsync(() => lsRemote(), {
+      message: /429/
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('lsRemote() rejects when results field is missing', async (t) => {
+  const {lsRemote} = proxyquire('../../cli/api', {
+    'registry-url': () => 'https://registry.npmjs.org/'
+  });
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (() => {
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({message: 'no results here'})
+    });
+  }) as any;
+
+  try {
+    await t.throwsAsync(() => lsRemote(), {
+      message: /unexpected response/
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('lsRemote() returns plugin list on success', async (t) => {
+  const {lsRemote} = proxyquire('../../cli/api', {
+    'registry-url': () => 'https://registry.npmjs.org/'
+  });
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (() => {
+    return Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {package: {name: 'hyper-awesome', description: 'An awesome plugin'}},
+            {package: {name: 'hyper-theme', description: 'A theme'}}
+          ]
+        })
+    });
+  }) as any;
+
+  try {
+    const result = await lsRemote();
+    t.deepEqual(result, [
+      {name: 'hyper-awesome', description: 'An awesome plugin'},
+      {name: 'hyper-theme', description: 'A theme'}
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

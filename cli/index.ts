@@ -97,16 +97,6 @@ args.command(
   ['ls']
 );
 
-const lsRemote = async (pattern?: string) => {
-  const url = `https://api.npms.io/v2/search?q=${
-    (pattern && `${encodeURIComponent(pattern)}+`) || ''
-  }keywords:hyper-plugin,hyper-theme&size=250`;
-  type npmResult = {package: {name: string; description: string}};
-  const response = await fetch(url);
-  const body = (await response.json()) as {results: npmResult[]};
-  return body.results.map((entry) => entry.package).map(({name, description}) => ({name, description}));
-};
-
 args.command(
   'search',
   'Search for plugins on npm',
@@ -114,7 +104,8 @@ args.command(
     const spinner = ora('Searching').start();
     const query = args_[0] ? args_[0].toLowerCase() : '';
 
-    commandPromise = lsRemote(query)
+    commandPromise = api
+      .lsRemote(query)
       .then((entries) => {
         if (entries.length === 0) {
           spinner.fail();
@@ -129,7 +120,7 @@ args.command(
       })
       .catch((err) => {
         spinner.fail();
-        console.error(chalk.red(err)); // TODO
+        console.error(chalk.red(err));
       });
   },
   ['s']
@@ -141,7 +132,8 @@ args.command(
   () => {
     const spinner = ora('Searching').start();
 
-    commandPromise = lsRemote()
+    commandPromise = api
+      .lsRemote()
       .then((entries) => {
         const msg = columnify(entries);
         spinner.succeed();
@@ -149,7 +141,7 @@ args.command(
       })
       .catch((err) => {
         spinner.fail();
-        console.error(chalk.red(err)); // TODO
+        console.error(chalk.red(err));
       });
   },
   ['lsr', 'ls-remote']

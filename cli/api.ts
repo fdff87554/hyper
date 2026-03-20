@@ -138,4 +138,21 @@ function list() {
 }
 
 export const configPath = fileName;
-export {exists, existsOnNpm, isInstalled, install, uninstall, list};
+type NpmSearchResult = {package: {name: string; description: string}};
+
+async function lsRemote(pattern?: string) {
+  const url = `https://api.npms.io/v2/search?q=${
+    (pattern && `${encodeURIComponent(pattern)}+`) || ''
+  }keywords:hyper-plugin,hyper-theme&size=250`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Plugin search failed (registry returned ${response.status})`);
+  }
+  const body = (await response.json()) as {results?: NpmSearchResult[]};
+  if (!Array.isArray(body.results)) {
+    throw new Error('Plugin search failed (unexpected response format)');
+  }
+  return body.results.map((entry) => entry.package).map(({name, description}) => ({name, description}));
+}
+
+export {exists, existsOnNpm, isInstalled, install, uninstall, list, lsRemote};
