@@ -21,6 +21,7 @@ import createRPC from '../rpc';
 import Session from '../session';
 import updater from '../updater';
 import {setRendererType, unsetRendererType} from '../utils/renderer-utils';
+import {escapeForShell} from '../utils/shell-escape';
 import toElectronBackgroundColor from '../utils/to-electron-background-color';
 import {isSafeExternalUrl} from '../utils/url-validation';
 
@@ -228,11 +229,7 @@ export function newWindow(
     const session = uid && sessions.get(uid);
     if (session) {
       if (escaped) {
-        const escapedData = session.shell?.endsWith('cmd.exe')
-          ? `"${data}"` // This is how cmd.exe does it
-          : `'${data.replace(/'/g, `'\\''`)}'`; // Inside a single-quoted string nothing is interpreted
-
-        session.write(escapedData);
+        session.write(escapeForShell(data, session.shell));
       } else {
         session.write(data);
       }
