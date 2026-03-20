@@ -41,7 +41,7 @@ function getId(plugins_: {plugins: string[]; localPlugins: string[]}) {
   return JSON.stringify(plugins_);
 }
 
-const watchers: Function[] = [];
+const watchers: ((err: Error | null, opts?: {force: boolean}) => void)[] = [];
 
 // we listen on configuration updates to trigger
 // plugin installation
@@ -100,6 +100,7 @@ function checkDeprecatedExtendKeymaps() {
 }
 
 let updating = false;
+const UPDATE_TIMEOUT_MS = 6 * 60 * 1000; // 6 minutes
 
 function updatePlugins({force = false} = {}) {
   if (updating) {
@@ -108,7 +109,19 @@ function updatePlugins({force = false} = {}) {
   updating = true;
   syncPackageJSON();
   const id_ = id;
+
+  // Safety timeout: if install() hangs and never calls back,
+  // reset the updating flag so future updates are not permanently blocked.
+  const safetyTimeout = setTimeout(() => {
+    if (updating) {
+      updating = false;
+      console.error('Plugin update timed out after 6 minutes, resetting update lock');
+      notify('Plugin update timed out', 'The update process took too long and was reset.');
+    }
+  }, UPDATE_TIMEOUT_MS);
+
   install((err) => {
+    clearTimeout(safetyTimeout);
     updating = false;
 
     if (err) {
@@ -251,7 +264,7 @@ function toDependencies(plugins_: {plugins: string[]}) {
   return obj;
 }
 
-export const subscribe = (fn: Function) => {
+export const subscribe = (fn: (err: Error | null, opts?: {force: boolean}) => void) => {
   watchers.push(fn);
   return () => {
     watchers.splice(watchers.indexOf(fn), 1);

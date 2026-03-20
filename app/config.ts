@@ -10,7 +10,7 @@ import {cfgPath, cfgDir} from './config/paths';
 import notify from './notify';
 import {getColorMap} from './utils/colors';
 
-const watchers: Function[] = [];
+const watchers: (() => void)[] = [];
 let cfg: parsedConfig = {} as any;
 let _watcher: chokidar.FSWatcher;
 
@@ -58,6 +58,7 @@ const _watch = () => {
   _watcher.on('change', onChange);
   _watcher.on('error', (error) => {
     console.error('error watching config', error);
+    notify('Configuration watch error', 'Failed to watch config file for changes. Config hot-reload may not work.');
   });
 
   app.on('before-quit', () => {
@@ -69,7 +70,7 @@ const _watch = () => {
   });
 };
 
-export const subscribe = (fn: Function) => {
+export const subscribe = (fn: () => void) => {
   watchers.push(fn);
   return () => {
     watchers.splice(watchers.indexOf(fn), 1);

@@ -63,7 +63,6 @@ export function newWindow(
   window.uid = classOpts.uid;
 
   app.plugins.onWindowClass(window);
-  window.uid = classOpts.uid;
 
   const rpc = createRPC(window);
   const sessions = new Map<string, Session>();
@@ -271,7 +270,9 @@ export function newWindow(
   });
   rpc.on('command', (command) => {
     const focusedWindow = BrowserWindow.getFocusedWindow();
-    execCommand(command, focusedWindow!);
+    if (focusedWindow) {
+      execCommand(command, focusedWindow);
+    }
   });
   // pass on the full screen events from the window to react
   rpc.win.on('enter-full-screen', () => {
@@ -287,6 +288,15 @@ export function newWindow(
       sessions.delete(key);
     });
   };
+  // Handle renderer process crashes
+  window.webContents.on('render-process-gone', (_event, details) => {
+    console.error(`Renderer process gone: ${details.reason} (exit code: ${details.exitCode})`);
+    deleteSessions();
+    if (details.reason !== 'clean-exit') {
+      notify('Renderer process crashed', `The terminal renderer exited unexpectedly (${details.reason}). Please reload the window.`);
+    }
+  });
+
   // we reset the rpc channel only upon
   // subsequent refreshes (ie: F5)
   let i = 0;

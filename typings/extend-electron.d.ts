@@ -19,7 +19,7 @@ declare global {
     // type Server = import('./rpc').Server;
     interface BrowserWindow {
       uid: string;
-      sessions: Map<any, any>;
+      sessions: Map<string, import('../app/session').default>;
       focusTime: number;
       clean: () => void;
       rpc: Server;
