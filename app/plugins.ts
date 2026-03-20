@@ -1,7 +1,6 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import {writeFileSync} from 'fs';
 import {resolve, basename} from 'path';
 
 import {app, dialog, ipcMain as _ipcMain} from 'electron';
@@ -20,6 +19,7 @@ import {plugs} from './config/paths';
 import notify from './notify';
 import {availableExtensions} from './plugins/extensions';
 import {install} from './plugins/install';
+import {atomicWriteFileSync} from './utils/atomic-write';
 import mapKeys from './utils/map-keys';
 
 // local storage
@@ -217,7 +217,7 @@ function syncPackageJSON() {
 
   const file = resolve(path, 'package.json');
   try {
-    writeFileSync(file, JSON.stringify(pkg, null, 2));
+    atomicWriteFileSync(file, JSON.stringify(pkg, null, 2));
   } catch (err) {
     alert(`An error occurred writing to ${file}`);
   }

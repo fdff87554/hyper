@@ -2,12 +2,13 @@ import {dirname, resolve} from 'path';
 
 import {builders, namedTypes} from 'ast-types';
 import type {ExpressionKind} from 'ast-types/lib/gen/kinds';
-import {copy, copySync, existsSync, readFileSync, writeFileSync} from 'fs-extra';
+import {copy, copySync, existsSync, readFileSync} from 'fs-extra';
 import merge from 'lodash/merge';
 import {parse, prettyPrint} from 'recast';
 import * as babelParser from 'recast/parsers/babel';
 
 import notify from '../notify';
+import {atomicWriteFileSync} from '../utils/atomic-write';
 
 import {_extractDefault} from './init';
 import {cfgDir, cfgPath, defaultCfg, legacyCfgPath, plugs, schemaFile, schemaPath} from './paths';
@@ -139,7 +140,7 @@ export const _write = (path: string, data: string) => {
     return str.replace(/\r?\n/g, '\r\n');
   };
   const format = process.platform === 'win32' ? crlfify(data.toString()) : data;
-  writeFileSync(path, format, 'utf8');
+  atomicWriteFileSync(path, format);
 };
 
 // Migrate Hyper3 config to Hyper4 but only if the user hasn't manually
