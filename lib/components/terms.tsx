@@ -17,10 +17,18 @@ const isMac = /Mac/.test(navigator.userAgent);
 export default class Terms extends React.Component<React.PropsWithChildren<TermsProps>> {
   terms: Record<string, Term>;
   registerCommands: (cmds: Record<string, (e: any, dispatch: HyperDispatch) => void>) => void;
+  private handleContextMenu: () => void;
   constructor(props: TermsProps, context: any) {
     super(props, context);
     this.terms = {};
     this.registerCommands = registerCommandHandlers;
+    this.handleContextMenu = () => {
+      const selection = window.getSelection()!.toString();
+      const {
+        props: {uid}
+      } = this.getActiveTerm();
+      this.props.onContextMenu(uid, selection);
+    };
     props.ref_(this);
   }
 
@@ -50,13 +58,7 @@ export default class Terms extends React.Component<React.PropsWithChildren<Terms
   }
 
   componentDidMount() {
-    window.addEventListener('contextmenu', () => {
-      const selection = window.getSelection()!.toString();
-      const {
-        props: {uid}
-      } = this.getActiveTerm();
-      this.props.onContextMenu(uid, selection);
-    });
+    window.addEventListener('contextmenu', this.handleContextMenu);
   }
 
   componentDidUpdate(prevProps: TermsProps) {
@@ -69,6 +71,7 @@ export default class Terms extends React.Component<React.PropsWithChildren<Terms
   }
 
   componentWillUnmount() {
+    window.removeEventListener('contextmenu', this.handleContextMenu);
     this.props.ref_(null);
   }
 
