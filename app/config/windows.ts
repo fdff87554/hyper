@@ -12,13 +12,19 @@ export type PersistedTab = {
   cwd: string;
 };
 
+type WindowStoreSchema = {
+  windowPosition: [number, number];
+  windowSize: [number, number];
+  tabs: PersistedTab[];
+};
+
 export const defaults = {
   windowPosition: [50, 50] as [number, number],
   windowSize: [540, 380] as [number, number]
 };
 
 // local storage
-const cfg = new Config({defaults});
+const cfg = new Config<WindowStoreSchema>({defaults});
 
 export function get() {
   const position = cfg.get('windowPosition', defaults.windowPosition);
@@ -27,16 +33,18 @@ export function get() {
 }
 
 export function getPersistedTabs(): PersistedTab[] {
-  return cfg.get('tabs', []) as PersistedTab[];
+  return cfg.get('tabs', []);
 }
 
 export function recordState(win: BrowserWindow) {
   cfg.set('windowPosition', win.getPosition());
   cfg.set('windowSize', win.getSize());
 
-  // Persist tab CWDs for layout restoration
+  // Persist tab CWDs for layout restoration.
+  // Deduplicate by CWD to avoid split panes creating duplicate tabs on restore.
   const sessions: Map<string, Session> = win.sessions;
   const tabs: PersistedTab[] = [];
+  const seenCwds = new Set<string>();
   for (const session of sessions.values()) {
     let cwd = '';
     const pid = session.pty?.pid;
@@ -47,7 +55,8 @@ export function recordState(win: BrowserWindow) {
         // Process may have already exited
       }
     }
-    if (cwd && isAbsolute(cwd) && existsSync(cwd)) {
+    if (cwd && isAbsolute(cwd) && existsSync(cwd) && !seenCwds.has(cwd)) {
+      seenCwds.add(cwd);
       tabs.push({cwd});
     }
   }
