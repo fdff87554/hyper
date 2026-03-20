@@ -41,7 +41,7 @@ function getId(plugins_: {plugins: string[]; localPlugins: string[]}) {
   return JSON.stringify(plugins_);
 }
 
-const watchers: ((err: Error | null, opts?: {force: boolean}) => void)[] = [];
+const watchers: ((err: string | Error | null, opts?: {force: boolean}) => void)[] = [];
 
 // we listen on configuration updates to trigger
 // plugin installation
@@ -194,7 +194,7 @@ function clearCache() {
 export {updatePlugins};
 
 export const getLoadedPluginVersions = () => {
-  return modules.map((mod) => ({name: mod._name, version: mod._version}));
+  return modules.map((mod) => ({name: mod._name, version: mod._version ?? ''}));
 };
 
 // we schedule the initial plugins update
@@ -264,7 +264,7 @@ function toDependencies(plugins_: {plugins: string[]}) {
   return obj;
 }
 
-export const subscribe = (fn: (err: Error | null, opts?: {force: boolean}) => void) => {
+export const subscribe = (fn: (err: string | Error | null, opts?: {force: boolean}) => void) => {
   watchers.push(fn);
   return () => {
     watchers.splice(watchers.indexOf(fn), 1);
@@ -402,11 +402,11 @@ function decorateEntity(base: unknown, key: string, type: 'object' | 'function')
 }
 
 function decorateObject<T>(base: T, key: string): T {
-  return decorateEntity(base, key, 'object');
+  return decorateEntity(base, key, 'object') as T;
 }
 
-function decorateClass(base: unknown, key: string) {
-  return decorateEntity(base, key, 'function');
+function decorateClass<T>(base: T, key: string): T {
+  return decorateEntity(base, key, 'function') as T;
 }
 
 export const getDeprecatedConfig = () => {
@@ -471,7 +471,7 @@ export const decorateSessionOptions = <T>(defaults: T): T => {
 };
 
 export const decorateSessionClass = <T>(Session: T): T => {
-  return decorateClass(Session, 'decorateSessionClass');
+  return decorateClass<T>(Session, 'decorateSessionClass');
 };
 
 export {toDependencies as _toDependencies};
