@@ -18,9 +18,10 @@ type WindowStoreSchema = {
   tabs: PersistedTab[];
 };
 
-export const defaults = {
-  windowPosition: [50, 50] as [number, number],
-  windowSize: [540, 380] as [number, number]
+export const defaults: WindowStoreSchema = {
+  windowPosition: [50, 50],
+  windowSize: [540, 380],
+  tabs: []
 };
 
 // local storage

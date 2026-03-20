@@ -126,8 +126,5 @@ test('builds SSH command with IPv6 address', (t) => {
 });
 
 test('builds SSH command with IPv6 address and username and port', (t) => {
-  t.is(
-    buildSSHCommand({hostname: '2001:db8::1', username: 'user', port: '2222'}),
-    'ssh user@2001:db8::1 -p 2222'
-  );
+  t.is(buildSSHCommand({hostname: '2001:db8::1', username: 'user', port: '2222'}), 'ssh user@2001:db8::1 -p 2222');
 });
