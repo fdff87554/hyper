@@ -4,17 +4,17 @@ import React from 'react';
 import Color from 'color';
 import isEqual from 'lodash/isEqual';
 import pickBy from 'lodash/pickBy';
-import {Terminal} from 'xterm';
-import type {ITerminalOptions, IDisposable} from 'xterm';
-import {CanvasAddon} from 'xterm-addon-canvas';
-import {FitAddon} from 'xterm-addon-fit';
-import {ImageAddon} from 'xterm-addon-image';
-import {LigaturesAddon} from 'xterm-addon-ligatures';
-import {SearchAddon} from 'xterm-addon-search';
-import type {ISearchDecorationOptions} from 'xterm-addon-search';
-import {Unicode11Addon} from 'xterm-addon-unicode11';
-import {WebLinksAddon} from 'xterm-addon-web-links';
-import {WebglAddon} from 'xterm-addon-webgl';
+import {Terminal} from '@xterm/xterm';
+import type {ITerminalOptions, IDisposable} from '@xterm/xterm';
+import {CanvasAddon} from '@xterm/addon-canvas';
+import {FitAddon} from '@xterm/addon-fit';
+import {ImageAddon} from '@xterm/addon-image';
+import {LigaturesAddon} from '@xterm/addon-ligatures';
+import {SearchAddon} from '@xterm/addon-search';
+import type {ISearchDecorationOptions} from '@xterm/addon-search';
+import {Unicode11Addon} from '@xterm/addon-unicode11';
+import {WebLinksAddon} from '@xterm/addon-web-links';
+import {WebglAddon} from '@xterm/addon-webgl';
 
 import type {TermProps} from '../../typings/hyper';
 import terms from '../terms';
@@ -24,7 +24,7 @@ import {isSafeExternalUrl} from '../utils/url-validation';
 
 import _SearchBox from './searchBox';
 
-import 'xterm/css/xterm.css';
+import '@xterm/xterm/css/xterm.css';
 
 const SearchBox = decorate(_SearchBox, 'SearchBox');
 

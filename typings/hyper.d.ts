@@ -41,7 +41,7 @@ export type ITermState = Immutable<{
 }>;
 
 export type cursorShapes = 'BEAM' | 'UNDERLINE' | 'BLOCK';
-import type {FontWeight, IWindowsPty, Terminal} from 'xterm';
+import type {FontWeight, IWindowsPty, Terminal} from '@xterm/xterm';
 import type {ColorMap, configOptions} from './config';
 
 export type uiState = Immutable<{
@@ -347,8 +347,8 @@ export type SearchBoxProps = {
   font: string;
 };
 
-import type {FitAddon} from 'xterm-addon-fit';
-import type {SearchAddon} from 'xterm-addon-search';
+import type {FitAddon} from '@xterm/addon-fit';
+import type {SearchAddon} from '@xterm/addon-search';
 export type TermProps = {
   backgroundColor: string;
   bell: 'SOUND' | false;
