@@ -2,10 +2,19 @@ import React, {forwardRef} from 'react';
 
 import type {NotificationsProps} from '../../typings/hyper';
 import {decorate} from '../utils/plugins';
+import {isSafeExternalUrl} from '../utils/url-validation';
 
 import Notification_ from './notification';
 
 const Notification = decorate(Notification_, 'Notification');
+
+const handleExternalLink = (ev: React.MouseEvent<HTMLAnchorElement>) => {
+  ev.preventDefault();
+  const href = ev.currentTarget.href;
+  if (isSafeExternalUrl(href)) {
+    void window.require('electron').shell.openExternal(href);
+  }
+};
 
 const Notifications = forwardRef<HTMLDivElement, NotificationsProps>((props, ref) => {
   return (
@@ -45,14 +54,7 @@ const Notifications = forwardRef<HTMLDivElement, NotificationsProps>((props, ref
           {props.messageURL ? (
             <>
               {props.messageText} (
-              <a
-                style={{color: '#fff'}}
-                onClick={(ev) => {
-                  void window.require('electron').shell.openExternal(ev.currentTarget.href);
-                  ev.preventDefault();
-                }}
-                href={props.messageURL}
-              >
+              <a style={{color: '#fff'}} onClick={handleExternalLink} href={props.messageURL}>
                 more
               </a>
               )
@@ -74,10 +76,7 @@ const Notifications = forwardRef<HTMLDivElement, NotificationsProps>((props, ref
           {props.updateNote && ` ${props.updateNote.trim().replace(/\.$/, '')}`} (
           <a
             style={{color: '#000'}}
-            onClick={(ev) => {
-              void window.require('electron').shell.openExternal(ev.currentTarget.href);
-              ev.preventDefault();
-            }}
+            onClick={handleExternalLink}
             href={`https://github.com/vercel/hyper/releases/tag/${props.updateVersion}`}
           >
             notes
@@ -102,10 +101,7 @@ const Notifications = forwardRef<HTMLDivElement, NotificationsProps>((props, ref
                 textDecoration: 'underline',
                 fontWeight: 'bold'
               }}
-              onClick={(ev) => {
-                void window.require('electron').shell.openExternal(ev.currentTarget.href);
-                ev.preventDefault();
-              }}
+              onClick={handleExternalLink}
               href={props.updateReleaseUrl!}
             >
               Download

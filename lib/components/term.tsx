@@ -20,6 +20,7 @@ import type {TermProps} from '../../typings/hyper';
 import terms from '../terms';
 import processClipboard from '../utils/paste';
 import {decorate} from '../utils/plugins';
+import {isSafeExternalUrl} from '../utils/url-validation';
 
 import _SearchBox from './searchBox';
 
@@ -216,7 +217,7 @@ export default class Term extends React.PureComponent<
       this.term.loadAddon(this.searchAddon);
       this.term.loadAddon(
         new WebLinksAddon((event, uri) => {
-          if (shallActivateWebLink(event)) void shell.openExternal(uri);
+          if (shallActivateWebLink(event) && isSafeExternalUrl(uri)) void shell.openExternal(uri);
         })
       );
       this.term.open(this.termRef);
