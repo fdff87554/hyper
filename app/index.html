@@ -5,7 +5,7 @@
 
     <meta charset="utf-8">
     <meta name="viewport" content="initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self'; style-src 'self' 'unsafe-inline'">
 
     <style>
       body {
@@ -31,8 +31,8 @@
   <body>
     <div id="mount"></div>
 
-    <script>start = performance.now();</script>
+    <script src="init-timing.js"></script>
     <script src="renderer/bundle.js"></script>
-    <script>console.log('total init time', performance.now() - start);</script>
+    <script src="init-timing-end.js"></script>
   </body>
 </html>

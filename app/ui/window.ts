@@ -23,6 +23,7 @@ import Session from '../session';
 import updater from '../updater';
 import {setRendererType, unsetRendererType} from '../utils/renderer-utils';
 import toElectronBackgroundColor from '../utils/to-electron-background-color';
+import {isSafeExternalUrl} from '../utils/url-validation';
 
 import contextMenuTemplate from './contextmenu';
 
@@ -49,7 +50,7 @@ export function newWindow(
     acceptFirstMouse: true,
     webPreferences: {
       nodeIntegration: true,
-      navigateOnDragDrop: true,
+      navigateOnDragDrop: false,
       contextIsolation: false
     },
     ...options_
@@ -245,7 +246,11 @@ export function newWindow(
     setRendererType(uid, type);
   });
   rpc.on('open external', ({url}) => {
-    void shell.openExternal(url);
+    if (isSafeExternalUrl(url)) {
+      void shell.openExternal(url);
+    } else {
+      console.warn(`Blocked opening URL with disallowed protocol: ${url}`);
+    }
   });
   rpc.on('open context menu', (selection) => {
     const {createWindow} = app;
