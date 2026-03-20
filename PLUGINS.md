@@ -1,13 +1,12 @@
-# Plugin development
+# Plugin Development
 
 ## Workflow
 
 ### Run Hyper in dev mode
-Hyper can be run in dev mode by cloning this repository and following the ["Contributing" section of our README](https://github.com/vercel/hyper#contribute).
+Hyper can be run in dev mode by cloning this repository and following the ["Contribute" section of our README](https://github.com/fdff87554/hyper#contribute).
 
-In dev mode you'll get more ouput and access to React/Redux dev-tools in Electron.
+In dev mode you'll get more output and access to React/Redux dev-tools in Electron.
 
-Prerequisites and steps are described in the ["Contributing" section of our README](https://github.com/vercel/hyper#contribute).
 Be sure to use the `canary` branch.
 
 ### Create a dev config file
@@ -30,15 +29,112 @@ module.exports = {
 ```
 
 ### Running your plugin
-To load, your plugin should expose at least one API method. All possible methods are listed [here](https://github.com/vercel/hyper/blob/canary/app/plugins/extensions.ts).
+To load, your plugin should expose at least one API method. All possible methods are listed in the [Extension Points](#extension-points) section below and in [`app/plugins/extensions.ts`](app/plugins/extensions.ts).
 
-After launching Hyper in dev mode, run `yarn run app`, it should log that your plugin has been correcty loaded: `Plugin hyper-awesome-plugin (0.1.0) loaded.`. Name and version printed are the ones in your plugins `package.json` file.
+After launching Hyper in dev mode, run `yarn run app`, it should log that your plugin has been correctly loaded: `Plugin hyper-awesome-plugin (0.1.0) loaded.`. Name and version printed are the ones in your plugins `package.json` file.
 
 When you put a `console.log()` in your plugin code, it will be displayed in the Electron dev-tools, but only if it is located in a renderer method, like component decorators. If it is located in the Electron main process method, like the `onApp` handler, it will be displayed in your terminal where you ran `yarn run app` or in your VSCode console.
 
+## Extension Points
+
+Hyper exposes 38 extension points (plus 1 deprecated alias). They are grouped below by category.
+
+**Source:** [`app/plugins/extensions.ts`](app/plugins/extensions.ts)
+
+### Lifecycle Hooks (Main Process)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `onApp` | `(app: Electron.App) => void` | Called when the app is ready. Use for app-level setup. |
+| `onWindow` | `(window: BrowserWindow) => void` | Called after a window is created and plugins are loaded. |
+| `onWindowClass` | `(window: BrowserWindow) => void` | Called during window construction, before plugins are loaded. |
+| `onRendererWindow` | `(window: Window) => void` | Called in the renderer process when the window loads. |
+| `onUnload` | `(app: Electron.App) => void` | Called before plugins are cleared from cache (e.g., on reload). |
+
+### Configuration & Environment
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `decorateConfig` | `(config: configOptions) => configOptions` | Modify the Hyper configuration object. |
+| `decorateKeymaps` | `(keymaps: Record<string, string>) => Record<string, string>` | Add or modify keyboard shortcuts. |
+| `decorateEnv` | `(env: Record<string, string>) => Record<string, string>` | Modify environment variables passed to shell sessions. |
+| `decorateBrowserOptions` | `(options: BrowserWindowConstructorOptions) => BrowserWindowConstructorOptions` | Modify Electron BrowserWindow options. |
+
+### Session Management (Main Process)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `decorateSessionClass` | `(Session: typeof Session) => typeof Session` | Wrap the Session class (PTY management). |
+| `decorateSessionOptions` | `(options: sessionOptions) => sessionOptions` | Modify options passed to new sessions. |
+| `decorateWindowClass` | `(options: {uid: string}) => {uid: string}` | Modify window class options during construction. |
+
+### Component Decorators (Renderer)
+
+These follow the Higher-Order Component (HOC) pattern. Each receives the original component and returns a decorated version.
+
+| Method | Component | Description |
+|--------|-----------|-------------|
+| `decorateHyper` | `Hyper` | The root application component. |
+| `decorateHeader` | `Header` | The window title bar / tab bar header. |
+| `decorateTerms` | `Terms` | The container for all terminal groups (tabs). |
+| `decorateTermGroup` | `TermGroup` | A single terminal group (can contain splits). |
+| `decorateSplitPane` | `SplitPane` | The split pane divider component. |
+| `decorateTerm` | `Term` | An individual terminal instance. |
+| `decorateTab` | `Tab` | A single tab in the tab bar. |
+| `decorateTabs` | `Tabs` | The tab bar container. |
+| `decorateNotification` | `Notification` | A single notification. |
+| `decorateNotifications` | `Notifications` | The notifications container. |
+| `decorateHyperTerm` | `Hyper` | **Deprecated.** Alias for `decorateHyper`. |
+
+### Menu
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `decorateMenu` | `(menu: MenuItemConstructorOptions[]) => MenuItemConstructorOptions[]` | Modify the application menu template. |
+
+### Props Getters (Renderer)
+
+These modify props passed to components. Return the modified props object.
+
+| Method | Target Component | Description |
+|--------|-----------------|-------------|
+| `getTermProps` | `Term` | Modify props passed to each terminal instance. |
+| `getTabProps` | `Tab` | Modify props passed to each tab. |
+| `getTabsProps` | `Tabs` | Modify props passed to the tabs container. |
+| `getTermGroupProps` | `TermGroup` | Modify props passed to each terminal group. |
+
+### State/Dispatch Mappers (Renderer, Redux)
+
+These work like Redux `mapStateToProps` and `mapDispatchToProps`. They allow plugins to inject additional state or dispatch functions into components.
+
+#### State Mappers
+
+| Method | Target Component | Description |
+|--------|-----------------|-------------|
+| `mapTermsState` | `Terms` | Map additional Redux state to Terms props. |
+| `mapHeaderState` | `Header` | Map additional Redux state to Header props. |
+| `mapNotificationsState` | `Notifications` | Map additional Redux state to Notifications props. |
+| `mapHyperTermState` | `Hyper` | Map additional Redux state to Hyper props. |
+
+#### Dispatch Mappers
+
+| Method | Target Component | Description |
+|--------|-----------------|-------------|
+| `mapTermsDispatch` | `Terms` | Map additional dispatch actions to Terms props. |
+| `mapHeaderDispatch` | `Header` | Map additional dispatch actions to Header props. |
+| `mapNotificationsDispatch` | `Notifications` | Map additional dispatch actions to Notifications props. |
+| `mapHyperTermDispatch` | `Hyper` | Map additional dispatch actions to Hyper props. |
+
+### Redux Middleware & Reducers (Renderer)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `middleware` | `Middleware` | Add Redux middleware for intercepting actions. |
+| `reduceUI` | `(state, action) => state` | Extend the UI reducer. |
+| `reduceSessions` | `(state, action) => state` | Extend the sessions reducer. |
+| `reduceTermGroups` | `(state, action) => state` | Extend the term groups reducer. |
+
 ## Recipes
-Almost all available API methods can be found on https://hyper.is.
-If there's any missing, let us know or submit a PR to document it!
 
 ### Components
 You can decorate almost all Hyper components with a Higher-Order Component (HOC). To understand their architecture, the easiest way is to use React dev-tools to dig in to their hierarchy.
@@ -71,7 +167,7 @@ exports.decorateTerms = (Terms, {React}) => {
     }
   }
 ```
-:warning: Note that you have to execute `this.props.onDecorated` to not break the handler chain. Without this, you could break other plugins that decorate the same component.
+**Note:** You must execute `this.props.onDecorated` to not break the handler chain. Without this, you could break other plugins that decorate the same component.
 
 ### Keymaps
 If you want to add some keymaps, you need to do 2 things:
@@ -91,7 +187,7 @@ exports.decorateKeymaps = keymaps => {
 The command name can be whatever you want, but the following is better to respect the default naming convention: `<context>:<action>`.
 Hotkeys are composed by [Mousetrap supported keys](https://craig.is/killing/mice#keys).
 
-**Bonus feature**: if your command ends with `:prefix`, it would mean that you want to use this command with an additional digit to the command. Then Hyper will create all your commands under the hood. For example, this keymap `'pane:hide:prefix': 'ctrl+shift'` will automatically generate the following:
+**Prefix feature**: if your command ends with `:prefix`, Hyper will automatically generate numbered variants. For example, `'pane:hide:prefix': 'ctrl+shift'` will generate:
 ```
 {
   'pane:hide:1': 'ctrl+shift+1',
@@ -101,7 +197,7 @@ Hotkeys are composed by [Mousetrap supported keys](https://craig.is/killing/mice
   'pane:hide:last': 'ctrl+shift+9'
 }
 ```
-Notice that `9` has been replaced by `last` because most of the time this is handy if you have more than 9 items.
+`9` is replaced by `last` for convenience when you have more than 9 items.
 
 
 #### Register a handler for your commands
@@ -134,38 +230,37 @@ Check the [Electron documentation](https://electronjs.org/docs/api/menu-item) fo
 Be careful, a click handler will be executed on the main process. If you need to trigger a handler in the render process you need to use an `rpc` message like this:
 ```js
 exports.decorateMenu = (menu) => {
-  debug('decorateMenu');
   const isMac = process.platform === 'darwin';
-  // menu label is different on mac
   const menuLabel = isMac ? 'Shell' : 'File';
 
   return menu.map(menuCategory => {
     if (menuCategory.label !== menuLabel) {
-      return menuItem;
+      return menuCategory;
     }
-    return [
+    return {
       ...menuCategory,
-      {
-        type: 'separator'
-      },
-      {
-        label: 'Clear all panes in all tabs',
-        accelerator: 'ctrl+shift+y',
-        click(item, focusedWindow) {
-          // on macOS, menu item can clicked without or minized window
-          if (focusedWindow) {
-            focusedWindow.rpc.emit('clear allPanes');
+      submenu: [
+        ...menuCategory.submenu,
+        { type: 'separator' },
+        {
+          label: 'Clear all panes in all tabs',
+          accelerator: 'ctrl+shift+y',
+          click(item, focusedWindow) {
+            if (focusedWindow) {
+              focusedWindow.rpc.emit('clear allPanes');
+            }
           }
         }
-      }
-    ]
+      ]
+    };
   });
 }
-/* Plugin needs to register a rpc handler on renderer side for example in a Terms HOC*/
+
+/* Register a rpc handler on renderer side */
 exports.decorateTerms = (Terms, { React }) => {
   return class extends React.Component {
     componentDidMount() {
-      window.rpc.on('clear allPanes',() => {
+      window.rpc.on('clear allPanes', () => {
         /* Awesome plugin feature */
       })
     }
@@ -177,7 +272,6 @@ exports.decorateTerms = (Terms, { React }) => {
 If your plugin needs to know cursor position/size, it can decorate the Term component and pass a handler. This handler will be called with each cursor move while passing back all information about the cursor.
 ```js
 exports.decorateTerm = (Term, { React, notify }) => {
-  // Define and return our higher order component.
   return class extends React.Component {
     onCursorMove (cursorFrame) {
       // Don't forget to propagate it to HOC chain
