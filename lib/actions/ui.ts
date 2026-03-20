@@ -3,9 +3,8 @@ import type {Stats} from 'fs';
 
 import {php_escapeshellcmd as escapeShellCmd} from 'php-escape-shell';
 
-import type {ParsedSSHUrl} from '../../app/utils/ssh-url';
 import {buildSSHCommand} from '../../app/utils/ssh-url';
-
+import type {ParsedSSHUrl} from '../../app/utils/ssh-url';
 import {
   UI_FONT_SIZE_SET,
   UI_FONT_SIZE_INCR,

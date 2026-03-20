@@ -228,10 +228,10 @@ const main = (argv: string[]) => {
     options['stdio'] = 'ignore';
     if (process.platform === 'darwin') {
       //Use `open` to prevent multiple Hyper process
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<void>((resolvePromise, rejectPromise) => {
         execFile('open', ['-b', 'co.zeit.hyper', ...args_], {env}, (error) => {
-          if (error) reject(error);
-          else resolve();
+          if (error) rejectPromise(error);
+          else resolvePromise();
         });
       });
     }

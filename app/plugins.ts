@@ -296,6 +296,7 @@ function requirePlugins(): MainProcessPlugin[] {
   const load = (path_: string): MainProcessPlugin | undefined => {
     let mod: MainProcessPlugin;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires -- dynamic plugin loading requires runtime require()
       mod = require(path_) as MainProcessPlugin;
       const exposed = mod && Object.keys(mod).some((key) => availableExtensions.has(key));
       if (!exposed) {

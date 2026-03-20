@@ -94,18 +94,20 @@ const updater = (win: BrowserWindow) => {
     autoUpdater.quitAndInstall();
   });
 
-  app.config.subscribe(async () => {
-    const {updateChannel} = await getDecoratedConfigWithRetry();
-    const newUpdateIsCanary = isCanary(updateChannel);
+  app.config.subscribe(() => {
+    void (async () => {
+      const {updateChannel} = await getDecoratedConfigWithRetry();
+      const newUpdateIsCanary = isCanary(updateChannel);
 
-    if (newUpdateIsCanary !== canaryUpdates) {
-      const feedURL = buildFeedUrl(newUpdateIsCanary, version);
+      if (newUpdateIsCanary !== canaryUpdates) {
+        const feedURL = buildFeedUrl(newUpdateIsCanary, version);
 
-      autoUpdater.setFeedURL({url: feedURL});
-      void checkForUpdates();
+        autoUpdater.setFeedURL({url: feedURL});
+        void checkForUpdates();
 
-      canaryUpdates = newUpdateIsCanary;
-    }
+        canaryUpdates = newUpdateIsCanary;
+      }
+    })();
   });
 
   win.on('close', () => {
