@@ -6,9 +6,11 @@ import type {parsedConfig, rawConfig, configOptions} from '../../typings/config'
 import notify from '../notify';
 import mapKeys from '../utils/map-keys';
 
+const VM_TIMEOUT_MS = 5000;
+
 const _extract = (script?: vm.Script): Record<string, any> => {
   const module: Record<string, any> = {};
-  script?.runInNewContext({module}, {displayErrors: true});
+  script?.runInNewContext({module}, {displayErrors: true, timeout: VM_TIMEOUT_MS});
   if (!module.exports) {
     throw new Error('Error reading configuration: `module.exports` not set');
   }
