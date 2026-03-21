@@ -102,6 +102,9 @@ jobs:
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_P12_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      - name: Generate SBOM
+        if: runner.os == 'Linux'
+        run: npx @cyclonedx/cdxgen -o dist/sbom.json
       - name: Archive Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -114,6 +117,7 @@ jobs:
             dist/*.rpm
             dist/*.pacman
             dist/*.exe
+            dist/sbom.json
 
   release-build-linux-arm:
     needs: test
@@ -183,20 +187,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
           pattern: release-*
           merge-multiple: true
-      - name: Generate SBOM
-        run: npx @cyclonedx/cyclonedx-npm --output-file artifacts/sbom.json
       - name: List release artifacts
         run: ls -la artifacts/
       - name: Create GitHub Release
