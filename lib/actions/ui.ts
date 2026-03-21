@@ -1,9 +1,8 @@
 import {stat} from 'fs';
 import type {Stats} from 'fs';
 
-import {php_escapeshellcmd as escapeShellCmd} from 'php-escape-shell';
-
 import {buildSSHCommand} from '../../app/utils/ssh-url';
+import {escapePosix} from '../../app/utils/shell-escape';
 import type {ParsedSSHUrl} from '../../app/utils/ssh-url';
 import {
   UI_FONT_SIZE_SET,
@@ -265,7 +264,7 @@ export function openFile(path: string) {
           if (err) {
             notify('Unable to open path', `"${path}" doesn't exist.`, {error: err});
           } else {
-            let command = escapeShellCmd(path).replace(/ /g, '\\ ');
+            let command = escapePosix(path);
             if (stats.isDirectory()) {
               command = `cd ${command}\n`;
             } else if (stats.isFile() && isExecutable(stats)) {
