@@ -113,6 +113,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ runner.os }}
+          retention-days: 30
           path: |
             dist/*.dmg
             dist/*.snap
@@ -177,6 +178,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-linux-${{ matrix.name }}
+          retention-days: 30
           path: |
             dist/*.snap
             dist/*.AppImage

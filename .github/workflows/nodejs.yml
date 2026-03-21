@@ -126,6 +126,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ runner.os }}
+          retention-days: 7
           path: |
             dist/*.dmg
             dist/*.snap
@@ -150,6 +151,7 @@ jobs:
         if: always()
         with:
           name: e2e-${{ runner.os }}
+          retention-days: 7
           path: dist/tmp/*.png
 
   build-linux-arm:
@@ -207,6 +209,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-linux-${{ matrix.name }}
+          retention-days: 7
           path: |
             dist/*.snap
             dist/*.AppImage
