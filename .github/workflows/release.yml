@@ -82,6 +82,7 @@ jobs:
           sudo apt update
           sudo apt install libarchive-tools
       - name: Set Release Build Icon
+        if: contains(github.ref_name, 'canary')
         run: |
           cp build/canary.ico build/icon.ico
           cp build/canary.icns build/icon.icns
