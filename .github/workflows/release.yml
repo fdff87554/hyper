@@ -1,0 +1,212 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  NODE_VERSION: 20.x
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Lint
+        run: yarn run lint
+      - name: Type Check
+        run: yarn tsc -b --noEmit
+
+  test:
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Run Unit Tests
+        run: yarn run test:unit
+
+  release-build:
+    needs: test
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install libarchive-tools
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install libarchive-tools
+      - name: Set Release Build Icon
+        run: |
+          cp build/canary.ico build/icon.ico
+          cp build/canary.icns build/icon.icns
+      - name: Build Distribution
+        run: |
+          if [ -z "$CSC_LINK" ] ; then unset CSC_LINK ; fi
+          if [ -z "$CSC_KEY_PASSWORD" ] ; then unset CSC_KEY_PASSWORD ; fi
+          if [ -z "$WIN_CSC_LINK" ] ; then unset WIN_CSC_LINK ; fi
+          if [ -z "$WIN_CSC_KEY_PASSWORD" ] ; then unset WIN_CSC_KEY_PASSWORD ; fi
+          if [ -z "$APPLE_ID" ] ; then unset APPLE_ID ; fi
+          if [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ] ; then unset APPLE_APP_SPECIFIC_PASSWORD ; fi
+          yarn run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.MAC_CERT_P12_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_P12_PASSWORD }}
+          WIN_CSC_LINK: ${{ secrets.WIN_CERT_P12_BASE64 }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_P12_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      - name: Archive Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ runner.os }}
+          path: |
+            dist/*.dmg
+            dist/*.snap
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+            dist/*.pacman
+            dist/*.exe
+
+  release-build-linux-arm:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - name: armv7l
+            cpu: cortex-a8
+            image: raspios_lite:latest
+          - name: arm64
+            cpu: cortex-a53
+            image: raspios_lite_arm64:latest
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install libarchive-tools
+        run: |
+          sudo apt update
+          sudo apt install libarchive-tools
+      - name: Compile
+        run: yarn run build
+      - name: Rebuild node-pty on ARM
+        uses: pguyot/arm-runner-action@v2.6.5
+        with:
+          image_additional_mb: 2000
+          base_image: ${{ matrix.image }}
+          cpu: ${{ matrix.cpu }}
+          shell: bash
+          copy_artifact_path: target/node_modules/node-pty
+          copy_artifact_dest: target/node_modules
+          commands: |
+            sudo apt-get update && sudo apt-get install -y python3-setuptools
+            wget https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-${{ matrix.name }}.tar.xz
+            tar -xJf node-v20.18.0-linux-${{ matrix.name }}.tar.xz
+            sudo cp node-v20.18.0-linux-${{ matrix.name }}/* /usr/local/ -R
+            npm run rebuild-node-pty
+      - name: Fix node-pty permissions
+        run: sudo chown -R $USER:$USER target/node_modules/node-pty
+      - name: Build Distribution
+        run: yarn run electron-builder -l deb rpm AppImage pacman --${{ matrix.name }} -c electron-builder-linux-ci.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Archive Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-linux-${{ matrix.name }}
+          path: |
+            dist/*.snap
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+            dist/*.pacman
+
+  create-release:
+    needs: [release-build, release-build-linux-arm]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: release-*
+          merge-multiple: true
+      - name: Generate SBOM
+        run: npx @cyclonedx/cyclonedx-npm --output-file artifacts/sbom.json
+      - name: List release artifacts
+        run: ls -la artifacts/
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --draft \
+            --title "${{ github.ref_name }}" \
+            --generate-notes \
+            artifacts/*
