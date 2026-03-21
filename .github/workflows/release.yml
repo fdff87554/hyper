@@ -93,7 +93,7 @@ jobs:
           if [ -z "$WIN_CSC_KEY_PASSWORD" ] ; then unset WIN_CSC_KEY_PASSWORD ; fi
           if [ -z "$APPLE_ID" ] ; then unset APPLE_ID ; fi
           if [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ] ; then unset APPLE_APP_SPECIFIC_PASSWORD ; fi
-          yarn run dist
+          yarn run build && electron-builder --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.MAC_CERT_P12_BASE64 }}
@@ -162,7 +162,7 @@ jobs:
       - name: Fix node-pty permissions
         run: sudo chown -R $USER:$USER target/node_modules/node-pty
       - name: Build Distribution
-        run: yarn run electron-builder -l deb rpm AppImage pacman --${{ matrix.name }} -c electron-builder-linux-ci.json
+        run: yarn run electron-builder -l deb rpm AppImage pacman --${{ matrix.name }} -c electron-builder-linux-ci.json --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Archive Build Artifacts
