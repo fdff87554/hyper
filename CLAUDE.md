@@ -25,7 +25,7 @@ lib/           # React renderer process (UI)
 cli/           # CLI for plugin management (install, uninstall, list, search)
 typings/       # TypeScript type definitions
 test/          # Unit tests (AVA) and E2E tests (Playwright)
-bin/           # Build scripts (V8 snapshots, notarization, version bump)
+bin/           # Build scripts (notarization, version bump)
 build/         # Platform-specific build assets (icons, entitlements)
 ```
 
@@ -34,14 +34,14 @@ build/         # Platform-specific build assets (icons, entitlements)
 - `yarn build`: 建置專案（Webpack + tsc）
 - `yarn test`: 執行測試（lint + unit tests）
 - `yarn lint`: 執行 linting（ESLint）
-- `yarn lint --fix`: 執行格式化（ESLint + Prettier）
+- `yarn lint --fix`: 自動修正 linting 問題並格式化程式碼（ESLint + Prettier）
 - `yarn dev`: Watch mode 開發（Webpack + TypeScript compiler 並行）
 - `yarn app`: 透過 electronmon 執行 Electron app（搭配 `yarn dev` 使用）
 - `yarn test:unit`: AVA 單元測試
 - `yarn test:unit:watch`: AVA watch mode
 - `yarn test:e2e`: Playwright E2E 測試
 - `yarn dist`: Distribution build（electron-builder）
-- `yarn clean`: 清除 node_modules 與 build artifacts
+- `yarn clean`: 清除 node_modules 與 renderer 編譯產出（`node_modules/`, `app/node_modules/`, `app/renderer/`）
 - `yarn generate-schema`: 從 TypeScript config types 產生 JSON schema
 
 ## 環境管理
@@ -120,7 +120,6 @@ build/         # Platform-specific build assets (icons, entitlements)
 - Redux 狀態管理（actions / reducers / store pattern in `/lib`）
 - styled-jsx 用於 React components 的 scoped CSS
 - Package manager: Yarn (classic)，不使用 npm
-- V8 snapshots 用於啟動效能優化
 - Config schema 自動從 TypeScript types 產生（`yarn generate-schema`）
 - 進行 Coding / Review 時，優先透過 context7 MCP 查詢相關文件與 Best Practice
 - 必要的輔助工具無法使用時，詢問使用者後安裝，優先透過 mise 管理
@@ -133,8 +132,9 @@ build/         # Platform-specific build assets (icons, entitlements)
   - Config: `.eslintrc.json`
   - Run: `yarn lint` / `yarn lint --fix`
   - Plugins: @typescript-eslint, react, prettier, import, lodash, eslint-comments, jsonc, json-schema-validator
-- **Prettier 3.2.5**: Code formatter（config 嵌入 `.eslintrc.json` 的 `prettier/prettier` rule）
-  - printWidth: 120, singleQuote: true, trailingComma: none, bracketSpacing: false, semi: true
+- **Prettier 3.2.5**: Code formatter
+  - JS/TS 檔案：透過 eslint-plugin-prettier 套用，設定嵌入 `.eslintrc.json` 的 `prettier/prettier` rule（printWidth: 120, singleQuote: true, trailingComma: none, bracketSpacing: false, semi: true）
+  - 非 JS 檔案（JSON/CSS/MD/YAML）：lint-staged 透過 `prettier --write` CLI 執行，使用 Prettier 預設值 + `.editorconfig`（專案無獨立 `.prettierrc`）
 - **EditorConfig**: `.editorconfig`（2-space indent, LF, UTF-8, trim trailing whitespace）
 
 ### Husky + lint-staged
