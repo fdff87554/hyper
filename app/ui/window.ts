@@ -14,7 +14,6 @@ import type {configOptions} from '../../typings/config';
 import {execCommand} from '../commands';
 import {getDefaultProfile} from '../config';
 import {icon, homeDirectory} from '../config/paths';
-import fetchNotifications from '../notifications';
 import notify from '../notify';
 import {decorateSessionOptions, decorateSessionClass} from '../plugins';
 import createRPC from '../rpc';
@@ -122,7 +121,6 @@ export function newWindow(
     // the callback passed as parameter, and deleted right after.
     (app.windowCallback || fn)(window);
     app.windowCallback = undefined;
-    fetchNotifications(window);
     // auto updates
     if (!isDev) {
       updater(window);

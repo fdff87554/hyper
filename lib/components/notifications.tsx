@@ -77,7 +77,7 @@ const Notifications = forwardRef<HTMLDivElement, NotificationsProps>((props, ref
           <a
             style={{color: '#000'}}
             onClick={handleExternalLink}
-            href={`https://github.com/vercel/hyper/releases/tag/${props.updateVersion}`}
+            href={`https://github.com/fdff87554/hyper/releases/tag/${props.updateVersion}`}
           >
             notes
           </a>

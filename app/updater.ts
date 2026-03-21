@@ -37,10 +37,9 @@ let isInit = false;
 // Default to the "stable" update channel
 let canaryUpdates = false;
 
-const buildFeedUrl = (canary: boolean, currentVersion: string) => {
-  const updatePrefix = canary ? 'releases-canary' : 'releases';
+const buildFeedUrl = (_canary: boolean, currentVersion: string) => {
   const archSuffix = process.arch === 'arm64' || app.runningUnderARM64Translation ? '_arm64' : '';
-  return `https://${updatePrefix}.hyper.is/update/${isLinux ? 'deb' : platform}${archSuffix}/${currentVersion}`;
+  return `https://update.electronjs.org/fdff87554/hyper/${isLinux ? 'deb' : platform}${archSuffix}/${currentVersion}`;
 };
 
 const isCanary = (updateChannel: string) => updateChannel === 'canary';
@@ -80,7 +79,7 @@ const updater = (win: BrowserWindow) => {
   const {rpc} = win;
 
   const onupdate = (ev: Event, releaseNotes: string, releaseName: string, date: Date, updateUrl: string) => {
-    const releaseUrl = updateUrl || `https://github.com/vercel/hyper/releases/tag/${releaseName}`;
+    const releaseUrl = updateUrl || `https://github.com/fdff87554/hyper/releases/tag/${releaseName}`;
     rpc.emit('update available', {releaseNotes, releaseName, releaseUrl, canInstall: !isLinux});
   };
 
