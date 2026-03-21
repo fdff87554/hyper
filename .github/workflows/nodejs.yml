@@ -51,7 +51,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
       - name: Install
-        run: yarn install
+        run: yarn install --frozen-lockfile
         env:
           npm_config_node_gyp: ${{ github.workspace }}${{ runner.os == 'Windows' && '\node_modules\node-gyp\bin\node-gyp.js' || '/node_modules/node-gyp/bin/node-gyp.js' }}
       - name: Install libarchive-tools
@@ -170,7 +170,7 @@ jobs:
             ${{ runner.os }}-yarn-
       - name: Install
         run: |
-          yarn install
+          yarn install --frozen-lockfile
           sudo apt update
           sudo apt install libarchive-tools
       - name: Compile
