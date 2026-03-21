@@ -15,6 +15,9 @@ defaults:
     shell: bash
 env:
   NODE_VERSION: 20.x
+  # ARM QEMU cannot use actions/setup-node, so an exact version is required.
+  # Keep this aligned with NODE_VERSION when updating.
+  NODE_VERSION_ARM: "20.18.0"
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -110,7 +113,7 @@ jobs:
           if [ -z "$WIN_CSC_KEY_PASSWORD" ] ; then unset WIN_CSC_KEY_PASSWORD ; fi
           if [ -z "$APPLE_ID" ] ; then unset APPLE_ID ; fi
           if [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ] ; then unset APPLE_APP_SPECIFIC_PASSWORD ; fi
-          yarn run build && electron-builder --publish never
+          yarn run build && yarn run electron-builder --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.MAC_CERT_P12_BASE64 }}
@@ -123,6 +126,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ runner.os }}
+          retention-days: 7
           path: |
             dist/*.dmg
             dist/*.snap
@@ -147,15 +151,8 @@ jobs:
         if: always()
         with:
           name: e2e-${{ runner.os }}
+          retention-days: 7
           path: dist/tmp/*.png
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-      - name: Save yarn cache
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', 'app/yarn.lock') }}
 
   build-linux-arm:
     needs: test
@@ -198,9 +195,9 @@ jobs:
           copy_artifact_dest: target/node_modules
           commands: |
             sudo apt-get update && sudo apt-get install -y python3-setuptools
-            wget https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-${{ matrix.name }}.tar.xz
-            tar -xJf node-v20.18.0-linux-${{ matrix.name }}.tar.xz
-            sudo cp node-v20.18.0-linux-${{ matrix.name }}/* /usr/local/ -R
+            wget https://nodejs.org/dist/v${{ env.NODE_VERSION_ARM }}/node-v${{ env.NODE_VERSION_ARM }}-linux-${{ matrix.name }}.tar.xz
+            tar -xJf node-v${{ env.NODE_VERSION_ARM }}-linux-${{ matrix.name }}.tar.xz
+            sudo cp node-v${{ env.NODE_VERSION_ARM }}-linux-${{ matrix.name }}/* /usr/local/ -R
             npm run rebuild-node-pty
       - name: Fix node-pty permissions
         run: sudo chown -R $USER:$USER target/node_modules/node-pty
@@ -212,6 +209,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-linux-${{ matrix.name }}
+          retention-days: 7
           path: |
             dist/*.snap
             dist/*.AppImage

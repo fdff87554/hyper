@@ -40,6 +40,14 @@ updates:
     open-pull-requests-limit: 10
     target-branch: canary
     versioning-strategy: increase
+    groups:
+      electron:
+        patterns:
+          - "electron-*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
 
   - package-ecosystem: github-actions
     directory: "/"
