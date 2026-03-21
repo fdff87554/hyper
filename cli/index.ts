@@ -229,7 +229,7 @@ const main = (argv: string[]) => {
     if (process.platform === 'darwin') {
       //Use `open` to prevent multiple Hyper process
       return new Promise<void>((resolvePromise, rejectPromise) => {
-        execFile('open', ['-b', 'co.zeit.hyper', ...args_], {env}, (error) => {
+        execFile('open', ['-b', 'dev.fdff87554.hyper', ...args_], {env}, (error) => {
           if (error) rejectPromise(error);
           else resolvePromise();
         });
