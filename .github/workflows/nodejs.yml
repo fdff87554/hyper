@@ -114,17 +114,6 @@ jobs:
         with:
           name: e2e-${{ runner.os }}
           path: dist/tmp/*.png
-      - name: Save the pr number in an artifact
-        if: github.event_name == 'pull_request'
-        env:
-          PR_NUM: ${{ github.event.number }}
-        run: echo $PR_NUM > pr_num.txt
-      - name: Upload the pr num
-        uses: actions/upload-artifact@v4
-        if: github.event_name == 'pull_request'
-        with:
-          name: pr_num
-          path: ./pr_num.txt
       - uses: actions/cache/save@v4
         if: github.event_name == 'push'
         with:
