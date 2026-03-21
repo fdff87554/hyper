@@ -212,7 +212,7 @@ const clearModulesCache = () => {
   // trigger unload hooks
   modules.forEach((mod) => {
     if (mod.onRendererUnload) {
-      mod.onRendererUnload(window);
+      mod.onRendererUnload();
     }
   });
 
@@ -294,8 +294,8 @@ const loadModules = () => {
 
       ObjectTypedKeys(mod).forEach((i) => {
         if (Object.hasOwnProperty.call(mod, i)) {
-          mod[i]._pluginName = pluginName;
-          mod[i]._pluginVersion = pluginVersion;
+          (mod[i] as any)._pluginName = pluginName;
+          (mod[i] as any)._pluginVersion = pluginVersion;
         }
       });
 
