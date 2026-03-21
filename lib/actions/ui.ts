@@ -1,7 +1,7 @@
 import {stat} from 'fs';
 import type {Stats} from 'fs';
 
-import {escapePosix} from '../../app/utils/shell-escape';
+import {escapeForShell} from '../../app/utils/shell-escape';
 import {buildSSHCommand} from '../../app/utils/ssh-url';
 import type {ParsedSSHUrl} from '../../app/utils/ssh-url';
 import {
@@ -264,14 +264,14 @@ export function openFile(path: string) {
           if (err) {
             notify('Unable to open path', `"${path}" doesn't exist.`, {error: err});
           } else {
-            let command = escapePosix(path);
-            if (stats.isDirectory()) {
-              command = `cd ${command}\n`;
-            } else if (stats.isFile() && isExecutable(stats)) {
-              command += '\n';
-            }
-            rpc.once('session add', ({uid}) => {
+            rpc.once('session add', ({uid, shell}: {uid: string; shell: string | null}) => {
               rpc.once('session data', () => {
+                let command = escapeForShell(path, shell);
+                if (stats.isDirectory()) {
+                  command = `cd ${command}\n`;
+                } else if (stats.isFile() && isExecutable(stats)) {
+                  command += '\n';
+                }
                 dispatch(sendSessionData(uid, command));
               });
             });
