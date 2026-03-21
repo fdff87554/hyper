@@ -14,12 +14,10 @@ import type {configOptions} from '../../typings/config';
 import {execCommand} from '../commands';
 import {getDefaultProfile} from '../config';
 import {icon, homeDirectory} from '../config/paths';
-import fetchNotifications from '../notifications';
 import notify from '../notify';
 import {decorateSessionOptions, decorateSessionClass} from '../plugins';
 import createRPC from '../rpc';
 import Session from '../session';
-import updater from '../updater';
 import {setRendererType, unsetRendererType} from '../utils/renderer-utils';
 import {escapeForShell} from '../utils/shell-escape';
 import toElectronBackgroundColor from '../utils/to-electron-background-color';
@@ -122,12 +120,14 @@ export function newWindow(
     // the callback passed as parameter, and deleted right after.
     (app.windowCallback || fn)(window);
     app.windowCallback = undefined;
-    fetchNotifications(window);
-    // auto updates
+    // TODO: Re-enable auto-updater when GitHub Releases and a release
+    // workflow are configured. Currently disabled because:
+    // 1. No GitHub Releases exist for this fork
+    // 2. CI only uploads artifacts, no release job
+    // 3. The update service (update.electronjs.org) requires published releases
+    // See: https://github.com/fdff87554/hyper/issues/7
     if (!isDev) {
-      updater(window);
-    } else {
-      console.log('ignoring auto updates during dev');
+      console.log('auto-updater disabled: no release infrastructure configured yet');
     }
   });
 

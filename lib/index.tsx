@@ -1,4 +1,3 @@
-import './v8-snapshot-util';
 import {webFrame} from 'electron';
 import React from 'react';
 

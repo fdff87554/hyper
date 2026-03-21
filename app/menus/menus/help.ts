@@ -13,7 +13,7 @@ const helpMenu = (commands: Record<string, string>, showAbout: () => void): Menu
     {
       label: `${app.name} Website`,
       click() {
-        void shell.openExternal('https://hyper.is');
+        void shell.openExternal('https://github.com/fdff87554/hyper');
       }
     },
     {
@@ -26,8 +26,8 @@ const helpMenu = (commands: Record<string, string>, showAbout: () => void): Menu
   If not, please try and fulfil these first.
 -->
 <!-- 👉 Checked checkbox should look like this: [x] -->
-- [ ] Your Hyper.app version is **${version}**. Please verify you're using the [latest](https://github.com/vercel/hyper/releases/latest) Hyper.app version
-- [ ] I have searched the [issues](https://github.com/vercel/hyper/issues) of this repo and believe that this is not a duplicate
+- [ ] Your Hyper.app version is **${version}**. Please verify you're using the [latest](https://github.com/fdff87554/hyper/releases/latest) Hyper.app version
+- [ ] I have searched the [issues](https://github.com/fdff87554/hyper/issues) of this repo and believe that this is not a duplicate
 ---
 - **Any relevant information from devtools?** _(CMD+OPTION+I on macOS, CTRL+SHIFT+I elsewhere)_:
 <!-- 👉 Replace with info if applicable, or N/A -->
@@ -61,11 +61,11 @@ ${JSON.stringify(getPlugins(), null, 2)}
 \`\`\`
 </details>`;
 
-        const issueURL = `https://github.com/vercel/hyper/issues/new?body=${encodeURIComponent(body)}`;
+        const issueURL = `https://github.com/fdff87554/hyper/issues/new?body=${encodeURIComponent(body)}`;
         const copyAndSend = () => {
           clipboard.writeText(body);
           void shell.openExternal(
-            `https://github.com/vercel/hyper/issues/new?body=${encodeURIComponent(
+            `https://github.com/fdff87554/hyper/issues/new?body=${encodeURIComponent(
               '<!-- We have written the needed data into your clipboard because it was too large to send. ' +
                 'Please paste. -->\n'
             )}`

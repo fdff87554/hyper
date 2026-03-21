@@ -23,37 +23,18 @@ The goal of the project is to create a beautiful and extensible experience for c
 
 Currently this fork is available by building from source. See the [Contribute](#contribute) section below.
 
-### Linux
-#### Arch and derivatives
-The upstream Hyper is available in the [AUR](https://aur.archlinux.org/packages/hyper/). Use an AUR [package manager](https://wiki.archlinux.org/index.php/AUR_helpers) e.g. [paru](https://github.com/Morganamilo/paru)
+> **Note:** The package managers listed below install the **upstream** Vercel version, not this fork.
+> To use this fork, please build from source.
 
-```sh
-paru -S hyper
-```
+<details>
+<summary>Upstream installation (Vercel's version)</summary>
 
-#### NixOS
-The upstream Hyper is available as [Nix package](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/hyper/default.nix), to install the app run this command:
+- **Arch Linux (AUR):** `paru -S hyper`
+- **NixOS:** `nix-env -i hyper`
+- **macOS (Homebrew):** `brew install --cask hyper`
+- **Windows (Chocolatey):** `choco install hyper`
 
-```sh
-nix-env -i hyper
-```
-
-### macOS
-
-Use [Homebrew Cask](https://brew.sh) to download the upstream app by running these commands:
-
-```bash
-brew update
-brew install --cask hyper
-```
-
-### Windows
-
-Use [chocolatey](https://chocolatey.org/) to install the upstream app by running the following command (package information can be found [here](https://chocolatey.org/packages/hyper/)):
-
-```bash
-choco install hyper
-```
+</details>
 
 ## Contribute
 

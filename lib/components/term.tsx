@@ -211,7 +211,6 @@ export default class Term extends React.PureComponent<
         return props.webLinksActivationKey ? event[`${props.webLinksActivationKey}Key`] : true;
       };
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       this.term.attachCustomKeyEventHandler(this.keyboardHandler);
       this.term.loadAddon(this.fitAddon);
       this.term.loadAddon(this.searchAddon);

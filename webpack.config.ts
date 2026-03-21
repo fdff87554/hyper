@@ -88,10 +88,6 @@ const config: webpack.Configuration[] = [
           exclude: /node_modules/,
           loader: 'babel-loader'
         },
-        {
-          test: /\.json/,
-          loader: 'json-loader'
-        },
         // for xterm.js
         {
           test: /\.css$/,
