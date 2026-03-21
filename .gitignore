@@ -4,6 +4,7 @@ app/renderer
 target
 bin/cli.*
 cache
+*.tsbuildinfo
 
 # dependencies
 node_modules
