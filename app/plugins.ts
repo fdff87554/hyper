@@ -1,6 +1,5 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import {resolve, basename} from 'path';
 
 import {app, BrowserWindow, dialog, ipcMain as _ipcMain} from 'electron';

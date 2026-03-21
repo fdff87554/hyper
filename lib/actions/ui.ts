@@ -1,8 +1,8 @@
 import {stat} from 'fs';
 import type {Stats} from 'fs';
 
-import {buildSSHCommand} from '../../app/utils/ssh-url';
 import {escapePosix} from '../../app/utils/shell-escape';
+import {buildSSHCommand} from '../../app/utils/ssh-url';
 import type {ParsedSSHUrl} from '../../app/utils/ssh-url';
 import {
   UI_FONT_SIZE_SET,

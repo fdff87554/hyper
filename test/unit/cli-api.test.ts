@@ -1,6 +1,5 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import test from 'ava';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
