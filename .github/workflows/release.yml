@@ -16,6 +16,9 @@ defaults:
 
 env:
   NODE_VERSION: 20.x
+  # ARM QEMU cannot use actions/setup-node, so an exact version is required.
+  # Keep this aligned with NODE_VERSION when updating.
+  NODE_VERSION_ARM: "20.18.0"
 
 jobs:
   lint:
@@ -160,9 +163,9 @@ jobs:
           copy_artifact_dest: target/node_modules
           commands: |
             sudo apt-get update && sudo apt-get install -y python3-setuptools
-            wget https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-${{ matrix.name }}.tar.xz
-            tar -xJf node-v20.18.0-linux-${{ matrix.name }}.tar.xz
-            sudo cp node-v20.18.0-linux-${{ matrix.name }}/* /usr/local/ -R
+            wget https://nodejs.org/dist/v${{ env.NODE_VERSION_ARM }}/node-v${{ env.NODE_VERSION_ARM }}-linux-${{ matrix.name }}.tar.xz
+            tar -xJf node-v${{ env.NODE_VERSION_ARM }}-linux-${{ matrix.name }}.tar.xz
+            sudo cp node-v${{ env.NODE_VERSION_ARM }}-linux-${{ matrix.name }}/* /usr/local/ -R
             npm run rebuild-node-pty
       - name: Fix node-pty permissions
         run: sudo chown -R $USER:$USER target/node_modules/node-pty
