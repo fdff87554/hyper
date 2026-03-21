@@ -1,0 +1,44 @@
+name: Setup Hyper Build Environment
+description: Shared setup for Node.js, Python (node-gyp), and yarn dependencies
+
+inputs:
+  node-version:
+    description: Node.js version to use
+    required: false
+    default: '20.x'
+
+runs:
+  using: composite
+  steps:
+    - name: Use Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Setup Python for node-gyp
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Fix node-gyp and Python
+      shell: bash
+      run: python3 -m pip install packaging setuptools
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      shell: bash
+      run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+
+    - name: Restore yarn cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', 'app/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Install dependencies
+      shell: bash
+      run: yarn install --frozen-lockfile
+      env:
+        npm_config_node_gyp: ${{ github.workspace }}${{ runner.os == 'Windows' && '\node_modules\node-gyp\bin\node-gyp.js' || '/node_modules/node-gyp/bin/node-gyp.js' }}
