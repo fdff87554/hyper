@@ -4,6 +4,12 @@ on:
     branches:
       - canary
   pull_request:
+    branches:
+      - canary
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+permissions: {}
 defaults:
   run:
     shell: bash
@@ -12,6 +18,9 @@ env:
 jobs:
   build:
     runs-on: ${{matrix.os}}
+    timeout-minutes: 30
+    permissions:
+      contents: read
     strategy:
       matrix:
         os:
@@ -124,6 +133,9 @@ jobs:
 
   build-linux-arm:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
     strategy:
       matrix:
         include:
