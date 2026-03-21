@@ -157,8 +157,8 @@ rpc.on('session search close', () => {
   store_.dispatch(sessionActions.closeSearch());
 });
 
-rpc.on('termgroup add req', ({activeUid, profile}) => {
-  store_.dispatch(termGroupActions.requestTermGroup(activeUid, profile));
+rpc.on('termgroup add req', ({activeUid, profile, cwd}) => {
+  store_.dispatch(termGroupActions.requestTermGroup(activeUid, profile, cwd));
 });
 
 rpc.on('split request horizontal', ({activeUid, profile}) => {

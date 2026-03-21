@@ -212,7 +212,6 @@ const clearModulesCache = () => {
   // trigger unload hooks
   modules.forEach((mod) => {
     if (mod.onRendererUnload) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       mod.onRendererUnload(window);
     }
   });
@@ -377,7 +376,6 @@ const loadModules = () => {
       }
 
       if (mod.onRendererWindow) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         mod.onRendererWindow(window);
       }
       console.log(`Plugin ${pluginName} (${pluginVersion}) loaded.`);

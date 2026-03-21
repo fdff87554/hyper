@@ -1,9 +1,10 @@
 import {stat} from 'fs';
 import type {Stats} from 'fs';
 
-import type parseUrl from 'parse-url';
 import {php_escapeshellcmd as escapeShellCmd} from 'php-escape-shell';
 
+import {buildSSHCommand} from '../../app/utils/ssh-url';
+import type {ParsedSSHUrl} from '../../app/utils/ssh-url';
 import {
   UI_FONT_SIZE_SET,
   UI_FONT_SIZE_INCR,
@@ -295,16 +296,12 @@ export function leaveFullScreen(): HyperActions {
   };
 }
 
-export function openSSH(parsedUrl: ReturnType<typeof parseUrl>) {
+export function openSSH(parsedUrl: ParsedSSHUrl) {
   return (dispatch: HyperDispatch) => {
     dispatch({
       type: UI_OPEN_SSH_URL,
       effect() {
-        let command = `${parsedUrl.protocol} ${parsedUrl.user ? `${parsedUrl.user}@` : ''}${parsedUrl.resource}`;
-
-        if (parsedUrl.port) command += ` -p ${parsedUrl.port}`;
-
-        command += '\n';
+        const command = buildSSHCommand(parsedUrl) + '\n';
 
         rpc.once('session add', ({uid}) => {
           rpc.once('session data', () => {

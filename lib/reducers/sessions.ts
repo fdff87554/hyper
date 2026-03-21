@@ -122,8 +122,8 @@ const reducer: ISessionReducer = (state = initialState, action) => {
       );
 
     case SESSION_SET_CWD:
-      if (state.activeUid) {
-        return state.setIn(['sessions', state.activeUid, 'cwd'], action.cwd);
+      if (state.sessions[action.uid]) {
+        return state.setIn(['sessions', action.uid, 'cwd'], action.cwd);
       }
       return state;
 

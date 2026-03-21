@@ -17,9 +17,19 @@ import * as api from './api';
 
 let commandPromise: Promise<void> | undefined;
 
+const VALID_PLUGIN_NAME = /^(@[a-zA-Z0-9._-]+\/)?[a-zA-Z0-9._-]+$/;
+
 const assertPluginName = (pluginName: string) => {
   if (!pluginName) {
     console.error(chalk.red('Plugin name is required'));
+    process.exit(1);
+  }
+};
+
+const assertSafePluginName = (pluginName: string) => {
+  assertPluginName(pluginName);
+  if (!VALID_PLUGIN_NAME.test(pluginName)) {
+    console.error(chalk.red('Invalid plugin name'));
     process.exit(1);
   }
 };
@@ -152,8 +162,8 @@ args.command(
   'Open the npm page of a plugin',
   (name, args_) => {
     const pluginName = args_[0];
-    assertPluginName(pluginName);
-    void open(`http://ghub.io/${pluginName}`, {wait: false});
+    assertSafePluginName(pluginName);
+    void open(`https://ghub.io/${pluginName}`, {wait: false});
     process.exit(0);
   },
   ['d', 'h', 'home']
@@ -218,10 +228,10 @@ const main = (argv: string[]) => {
     options['stdio'] = 'ignore';
     if (process.platform === 'darwin') {
       //Use `open` to prevent multiple Hyper process
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<void>((resolvePromise, rejectPromise) => {
         execFile('open', ['-b', 'co.zeit.hyper', ...args_], {env}, (error) => {
-          if (error) reject(error);
-          else resolve();
+          if (error) rejectPromise(error);
+          else resolvePromise();
         });
       });
     }

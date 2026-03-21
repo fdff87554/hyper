@@ -41,7 +41,7 @@ export type ITermState = Immutable<{
 }>;
 
 export type cursorShapes = 'BEAM' | 'UNDERLINE' | 'BLOCK';
-import type {FontWeight, IWindowsPty, Terminal} from 'xterm';
+import type {FontWeight, IWindowsPty, Terminal} from '@xterm/xterm';
 import type {ColorMap, configOptions} from './config';
 
 export type uiState = Immutable<{
@@ -130,7 +130,7 @@ export type session = {
 export type sessionState = Immutable<{
   sessions: Record<string, session>;
   activeUid: string | null;
-  write?: any;
+  write?: {uid: string; data: string};
 }>;
 
 export type ITermGroupReducer = Reducer<ITermState, HyperActions>;
@@ -139,25 +139,30 @@ export type IUiReducer = Reducer<uiState, HyperActions>;
 
 export type ISessionReducer = Reducer<sessionState, HyperActions>;
 
-import type {Middleware, Reducer} from 'redux';
+import type {Middleware, Reducer, Dispatch} from 'redux';
+
+type PropsMapper<P> = (state: HyperState, ownProps: P) => Record<string, unknown>;
+type DispatchMapper<P> = (dispatch: Dispatch, ownProps: P) => Record<string, unknown>;
+type PropsGetter<P> = (uid: string, parentProps: Record<string, unknown>, props: P) => P;
+
 export type hyperPlugin = {
-  getTabProps: any;
-  getTabsProps: any;
-  getTermGroupProps: any;
-  getTermProps: any;
-  mapHeaderDispatch: any;
-  mapHyperDispatch: any;
-  mapHyperTermDispatch: any;
-  mapNotificationsDispatch: any;
-  mapTermsDispatch: any;
-  mapHeaderState: any;
-  mapHyperState: any;
-  mapHyperTermState: any;
-  mapNotificationsState: any;
-  mapTermsState: any;
+  getTabProps: PropsGetter<TabProps>;
+  getTabsProps: PropsGetter<TabsProps>;
+  getTermGroupProps: PropsGetter<TermGroupOwnProps>;
+  getTermProps: PropsGetter<TermProps>;
+  mapHeaderDispatch: DispatchMapper<Record<string, unknown>>;
+  mapHyperDispatch: DispatchMapper<Record<string, unknown>>;
+  mapHyperTermDispatch: DispatchMapper<Record<string, unknown>>;
+  mapNotificationsDispatch: DispatchMapper<Record<string, unknown>>;
+  mapTermsDispatch: DispatchMapper<Record<string, unknown>>;
+  mapHeaderState: PropsMapper<Record<string, unknown>>;
+  mapHyperState: PropsMapper<Record<string, unknown>>;
+  mapHyperTermState: PropsMapper<Record<string, unknown>>;
+  mapNotificationsState: PropsMapper<Record<string, unknown>>;
+  mapTermsState: PropsMapper<Record<string, unknown>>;
   middleware: Middleware;
-  onRendererUnload: any;
-  onRendererWindow: any;
+  onRendererUnload: () => void;
+  onRendererWindow: (window: Window) => void;
   reduceSessions: ISessionReducer;
   reduceTermGroups: ITermGroupReducer;
   reduceUI: IUiReducer;
@@ -255,7 +260,7 @@ export type NotificationProps = {
   backgroundColor: string;
   color?: string;
   dismissAfter?: number;
-  onDismiss: Function;
+  onDismiss: () => void;
   text?: string | null;
   userDismissable?: boolean | null;
   userDismissColor?: string;
@@ -304,6 +309,7 @@ export type TermGroupOwnProps = {
   | 'onActive'
   | 'onContextMenu'
   | 'onCloseSearch'
+  | 'onCwd'
   | 'onData'
   | 'onOpenSearch'
   | 'onResize'
@@ -342,8 +348,8 @@ export type SearchBoxProps = {
   font: string;
 };
 
-import type {FitAddon} from 'xterm-addon-fit';
-import type {SearchAddon} from 'xterm-addon-search';
+import type {FitAddon} from '@xterm/addon-fit';
+import type {SearchAddon} from '@xterm/addon-search';
 export type TermProps = {
   backgroundColor: string;
   bell: 'SOUND' | false;
@@ -376,6 +382,7 @@ export type TermProps = {
   onCloseSearch: () => void;
   onContextMenu: (selection: any) => void;
   onCursorMove?: (cursorFrame: {x: number; y: number; width: number; height: number; col: number; row: number}) => void;
+  onCwd?: (cwd: string) => void;
   onData: (data: string) => void;
   onOpenSearch: () => void;
   onResize: (cols: number, rows: number) => void;

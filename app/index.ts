@@ -24,12 +24,12 @@ import {app, BrowserWindow, Menu, screen} from 'electron';
 
 import isDev from 'electron-is-dev';
 import {gitDescribe} from 'git-describe';
-import parseUrl from 'parse-url';
 
 import * as AppMenu from './menus/menu';
 import * as plugins from './plugins';
 import {newWindow} from './ui/window';
 import {installCLI} from './utils/cli-install';
+import {parseSSHUrl} from './utils/ssh-url';
 import * as windowUtils from './utils/window-utils';
 
 const windowSet = new Set<BrowserWindow>([]);
@@ -232,7 +232,12 @@ app.on('open-file', (_event, path) => {
 });
 
 app.on('open-url', (_event, sshUrl) => {
+  const parsed = parseSSHUrl(sshUrl);
+  if (!parsed) {
+    console.warn(`Blocked invalid or unsafe SSH URL: ${sshUrl}`);
+    return;
+  }
   GetWindow((win: BrowserWindow) => {
-    win.rpc.emit('open ssh', parseUrl(sshUrl));
+    win.rpc.emit('open ssh', parsed);
   });
 });

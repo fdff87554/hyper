@@ -41,7 +41,7 @@ function getId(plugins_: {plugins: string[]; localPlugins: string[]}) {
   return JSON.stringify(plugins_);
 }
 
-const watchers: Function[] = [];
+const watchers: ((err: string | Error | null, opts?: {force: boolean}) => void)[] = [];
 
 // we listen on configuration updates to trigger
 // plugin installation
@@ -100,6 +100,7 @@ function checkDeprecatedExtendKeymaps() {
 }
 
 let updating = false;
+const UPDATE_TIMEOUT_MS = 6 * 60 * 1000; // 6 minutes
 
 function updatePlugins({force = false} = {}) {
   if (updating) {
@@ -108,7 +109,19 @@ function updatePlugins({force = false} = {}) {
   updating = true;
   syncPackageJSON();
   const id_ = id;
+
+  // Safety timeout: if install() hangs and never calls back,
+  // reset the updating flag so future updates are not permanently blocked.
+  const safetyTimeout = setTimeout(() => {
+    if (updating) {
+      updating = false;
+      console.error('Plugin update timed out after 6 minutes, resetting update lock');
+      notify('Plugin update timed out', 'The update process took too long and was reset.');
+    }
+  }, UPDATE_TIMEOUT_MS);
+
   install((err) => {
+    clearTimeout(safetyTimeout);
     updating = false;
 
     if (err) {
@@ -181,7 +194,7 @@ function clearCache() {
 export {updatePlugins};
 
 export const getLoadedPluginVersions = () => {
-  return modules.map((mod) => ({name: mod._name, version: mod._version}));
+  return modules.map((mod) => ({name: mod._name, version: mod._version ?? ''}));
 };
 
 // we schedule the initial plugins update
@@ -210,9 +223,9 @@ function syncPackageJSON() {
     description: 'Auto-generated from `hyper.json`!',
     private: true,
     version: '0.0.1',
-    repository: 'vercel/hyper',
+    repository: 'fdff87554/hyper',
     license: 'MIT',
-    homepage: 'https://hyper.is',
+    homepage: 'https://github.com/fdff87554/hyper',
     dependencies
   };
 
@@ -251,7 +264,7 @@ function toDependencies(plugins_: {plugins: string[]}) {
   return obj;
 }
 
-export const subscribe = (fn: Function) => {
+export const subscribe = (fn: (err: string | Error | null, opts?: {force: boolean}) => void) => {
   watchers.push(fn);
   return () => {
     watchers.splice(watchers.indexOf(fn), 1);
@@ -283,6 +296,7 @@ function requirePlugins(): MainProcessPlugin[] {
   const load = (path_: string): MainProcessPlugin | undefined => {
     let mod: MainProcessPlugin;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires -- dynamic plugin loading requires runtime require()
       mod = require(path_) as MainProcessPlugin;
       const exposed = mod && Object.keys(mod).some((key) => availableExtensions.has(key));
       if (!exposed) {
@@ -388,11 +402,11 @@ function decorateEntity(base: unknown, key: string, type: 'object' | 'function')
 }
 
 function decorateObject<T>(base: T, key: string): T {
-  return decorateEntity(base, key, 'object');
+  return decorateEntity(base, key, 'object') as T;
 }
 
-function decorateClass(base: unknown, key: string) {
-  return decorateEntity(base, key, 'function');
+function decorateClass<T>(base: T, key: string): T {
+  return decorateEntity(base, key, 'function') as T;
 }
 
 export const getDeprecatedConfig = () => {
@@ -457,7 +471,7 @@ export const decorateSessionOptions = <T>(defaults: T): T => {
 };
 
 export const decorateSessionClass = <T>(Session: T): T => {
-  return decorateClass(Session, 'decorateSessionClass');
+  return decorateClass<T>(Session, 'decorateSessionClass');
 };
 
 export {toDependencies as _toDependencies};

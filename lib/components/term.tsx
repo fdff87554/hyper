@@ -1,20 +1,20 @@
 import {clipboard, shell} from 'electron';
 import React from 'react';
 
+import {CanvasAddon} from '@xterm/addon-canvas';
+import {FitAddon} from '@xterm/addon-fit';
+import {ImageAddon} from '@xterm/addon-image';
+import {LigaturesAddon} from '@xterm/addon-ligatures';
+import {SearchAddon} from '@xterm/addon-search';
+import type {ISearchDecorationOptions} from '@xterm/addon-search';
+import {Unicode11Addon} from '@xterm/addon-unicode11';
+import {WebLinksAddon} from '@xterm/addon-web-links';
+import {WebglAddon} from '@xterm/addon-webgl';
+import {Terminal} from '@xterm/xterm';
+import type {ITerminalOptions, IDisposable} from '@xterm/xterm';
 import Color from 'color';
 import isEqual from 'lodash/isEqual';
 import pickBy from 'lodash/pickBy';
-import {Terminal} from 'xterm';
-import type {ITerminalOptions, IDisposable} from 'xterm';
-import {CanvasAddon} from 'xterm-addon-canvas';
-import {FitAddon} from 'xterm-addon-fit';
-import {ImageAddon} from 'xterm-addon-image';
-import {LigaturesAddon} from 'xterm-addon-ligatures';
-import {SearchAddon} from 'xterm-addon-search';
-import type {ISearchDecorationOptions} from 'xterm-addon-search';
-import {Unicode11Addon} from 'xterm-addon-unicode11';
-import {WebLinksAddon} from 'xterm-addon-web-links';
-import {WebglAddon} from 'xterm-addon-webgl';
 
 import type {TermProps} from '../../typings/hyper';
 import terms from '../terms';
@@ -24,7 +24,7 @@ import {isSafeExternalUrl} from '../utils/url-validation';
 
 import _SearchBox from './searchBox';
 
-import 'xterm/css/xterm.css';
+import '@xterm/xterm/css/xterm.css';
 
 const SearchBox = decorate(_SearchBox, 'SearchBox');
 
@@ -290,6 +290,27 @@ export default class Term extends React.PureComponent<
 
       // the row and col of init session is null, so reize the node-pty
       props.onResize(this.term.cols, this.term.rows);
+    }
+
+    // OSC 7: Current Working Directory reporting
+    // Shells emit \e]7;file://hostname/path\a when the CWD changes.
+    if (props.onCwd) {
+      this.disposableListeners.push(
+        this.term.parser.registerOscHandler(7, (data) => {
+          try {
+            const url = new URL(data);
+            if (url.protocol === 'file:') {
+              const cwd = decodeURIComponent(url.pathname);
+              if (cwd) {
+                props.onCwd!(cwd);
+              }
+            }
+          } catch {
+            // Ignore malformed OSC 7 data
+          }
+          return true;
+        })
+      );
     }
 
     if (props.onCursorMove) {

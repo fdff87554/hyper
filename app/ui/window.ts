@@ -21,6 +21,7 @@ import createRPC from '../rpc';
 import Session from '../session';
 import updater from '../updater';
 import {setRendererType, unsetRendererType} from '../utils/renderer-utils';
+import {escapeForShell} from '../utils/shell-escape';
 import toElectronBackgroundColor from '../utils/to-electron-background-color';
 import {isSafeExternalUrl} from '../utils/url-validation';
 
@@ -62,7 +63,6 @@ export function newWindow(
   window.uid = classOpts.uid;
 
   app.plugins.onWindowClass(window);
-  window.uid = classOpts.uid;
 
   const rpc = createRPC(window);
   const sessions = new Map<string, Session>();
@@ -97,9 +97,23 @@ export function newWindow(
     // If no callback is passed to createWindow,
     // a new session will be created by default.
     if (!fn) {
-      fn = (win: BrowserWindow) => {
-        win.rpc.emit('termgroup add req', {});
-      };
+      // Restore persisted tabs if available
+      const persistedTabs = app.config.getPersistedTabs();
+      if (persistedTabs.length > 0) {
+        fn = (win: BrowserWindow) => {
+          // Create first tab
+          win.rpc.emit('termgroup add req', {cwd: persistedTabs[0].cwd});
+          // Create additional tabs
+          for (let i = 1; i < persistedTabs.length; i++) {
+            win.rpc.emit('termgroup add req', {cwd: persistedTabs[i].cwd});
+          }
+        };
+        app.config.clearPersistedTabs();
+      } else {
+        fn = (win: BrowserWindow) => {
+          win.rpc.emit('termgroup add req', {});
+        };
+      }
     }
 
     // app.windowCallback is the createWindow callback
@@ -228,11 +242,7 @@ export function newWindow(
     const session = uid && sessions.get(uid);
     if (session) {
       if (escaped) {
-        const escapedData = session.shell?.endsWith('cmd.exe')
-          ? `"${data}"` // This is how cmd.exe does it
-          : `'${data.replace(/'/g, `'\\''`)}'`; // Inside a single-quoted string nothing is interpreted
-
-        session.write(escapedData);
+        session.write(escapeForShell(data, session.shell));
       } else {
         session.write(data);
       }
@@ -274,7 +284,9 @@ export function newWindow(
   });
   rpc.on('command', (command) => {
     const focusedWindow = BrowserWindow.getFocusedWindow();
-    execCommand(command, focusedWindow!);
+    if (focusedWindow) {
+      execCommand(command, focusedWindow);
+    }
   });
   // pass on the full screen events from the window to react
   rpc.win.on('enter-full-screen', () => {
@@ -290,6 +302,18 @@ export function newWindow(
       sessions.delete(key);
     });
   };
+  // Handle renderer process crashes
+  window.webContents.on('render-process-gone', (_event, details) => {
+    console.error(`Renderer process gone: ${details.reason} (exit code: ${details.exitCode})`);
+    deleteSessions();
+    if (details.reason !== 'clean-exit') {
+      notify(
+        'Renderer process crashed',
+        `The terminal renderer exited unexpectedly (${details.reason}). Please reload the window.`
+      );
+    }
+  });
+
   // we reset the rpc channel only upon
   // subsequent refreshes (ie: F5)
   let i = 0;

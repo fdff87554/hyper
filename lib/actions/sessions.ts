@@ -10,6 +10,7 @@ import {
   SESSION_SET_ACTIVE,
   SESSION_CLEAR_ACTIVE,
   SESSION_USER_DATA,
+  SESSION_SET_CWD,
   SESSION_SET_XTERM_TITLE,
   SESSION_SEARCH
 } from '../../typings/constants/sessions';
@@ -112,6 +113,14 @@ export function setSessionXtermTitle(uid: string, title: string): HyperActions {
     type: SESSION_SET_XTERM_TITLE,
     uid,
     title
+  };
+}
+
+export function setSessionCwd(uid: string, cwd: string): HyperActions {
+  return {
+    type: SESSION_SET_CWD,
+    uid,
+    cwd
   };
 }
 
