@@ -16,8 +16,67 @@ defaults:
 env:
   NODE_VERSION: 20.x
 jobs:
-  build:
-    runs-on: ${{matrix.os}}
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Lint
+        run: yarn run lint
+      - name: Type Check
+        run: yarn tsc -b --noEmit
+
+  test:
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Run Unit Tests
+        run: yarn run test:unit
+
+  build-check:
+    needs: lint
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Build
+        run: yarn run build
+
+  dist:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -31,42 +90,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Use Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+      - name: Setup
+        uses: ./.github/actions/setup
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Setup Python for node-gyp
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-      - uses: actions/cache/restore@v4
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', 'app/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-      - name: Install
-        run: yarn install --frozen-lockfile
-        env:
-          npm_config_node_gyp: ${{ github.workspace }}${{ runner.os == 'Windows' && '\node_modules\node-gyp\bin\node-gyp.js' || '/node_modules/node-gyp/bin/node-gyp.js' }}
       - name: Install libarchive-tools
         if: runner.os == 'Linux'
         run: |
           sudo apt update
           sudo apt install libarchive-tools
-      - name: Lint and Run Unit Tests
-        run: yarn run test
       - name: Getting Build Icon
-        if: github.ref == 'refs/heads/canary' || github.base_ref == 'canary'
+        if: github.ref == 'refs/heads/canary'
         run: |
           cp build/canary.ico build/icon.ico
           cp build/canary.icns build/icon.icns
-      - name: Build
+      - name: Build Distribution
         run: |
           if [ -z "$CSC_LINK" ] ; then unset CSC_LINK ; fi
           if [ -z "$CSC_KEY_PASSWORD" ] ; then unset CSC_KEY_PASSWORD ; fi
@@ -77,12 +115,12 @@ jobs:
           yarn run dist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ github.event_name == 'push' && secrets.MAC_CERT_P12_BASE64 || '' }}
-          CSC_KEY_PASSWORD: ${{ github.event_name == 'push' && secrets.MAC_CERT_P12_PASSWORD || '' }}
-          WIN_CSC_LINK: ${{ github.event_name == 'push' && secrets.WIN_CERT_P12_BASE64 || '' }}
-          WIN_CSC_KEY_PASSWORD: ${{ github.event_name == 'push' && secrets.WIN_CERT_P12_PASSWORD || '' }}
-          APPLE_ID: ${{ github.event_name == 'push' && secrets.APPLE_ID || '' }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ github.event_name == 'push' && secrets.APPLE_PASSWORD || '' }}
+          CSC_LINK: ${{ secrets.MAC_CERT_P12_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_P12_PASSWORD }}
+          WIN_CSC_LINK: ${{ secrets.WIN_CERT_P12_BASE64 }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_P12_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
       - name: Archive Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -112,13 +150,18 @@ jobs:
         with:
           name: e2e-${{ runner.os }}
           path: dist/tmp/*.png
-      - uses: actions/cache/save@v4
-        if: github.event_name == 'push'
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+      - name: Save yarn cache
+        uses: actions/cache/save@v4
         with:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', 'app/yarn.lock') }}
 
   build-linux-arm:
+    needs: test
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -136,33 +179,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Use Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+      - name: Setup
+        uses: ./.github/actions/setup
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Setup Python for node-gyp
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-      - uses: actions/cache/restore@v4
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', 'app/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-      - name: Install
+      - name: Install libarchive-tools
         run: |
-          yarn install --frozen-lockfile
           sudo apt update
           sudo apt install libarchive-tools
       - name: Compile
         run: yarn run build
-      - name: rebuild node-pty
+      - name: Rebuild node-pty on ARM
         uses: pguyot/arm-runner-action@v2.6.5
         with:
           image_additional_mb: 2000
@@ -177,10 +204,9 @@ jobs:
             tar -xJf node-v20.18.0-linux-${{ matrix.name }}.tar.xz
             sudo cp node-v20.18.0-linux-${{ matrix.name }}/* /usr/local/ -R
             npm run rebuild-node-pty
-      - name: chown node-pty
-        run: |
-          sudo chown -R $USER:$USER target/node_modules/node-pty
-      - name: Build
+      - name: Fix node-pty permissions
+        run: sudo chown -R $USER:$USER target/node_modules/node-pty
+      - name: Build Distribution
         run: yarn run electron-builder -l deb rpm AppImage pacman --${{ matrix.name }} -c electron-builder-linux-ci.json
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
