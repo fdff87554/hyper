@@ -1,25 +1,50 @@
 version: 2
 updates:
-- package-ecosystem: npm
-  directory: "/"
-  schedule:
-    interval: weekly
-    time: '11:00'
-  open-pull-requests-limit: 30
-  target-branch: canary
-  versioning-strategy: increase
-- package-ecosystem: npm
-  directory: "/app"
-  schedule:
-    interval: weekly
-    time: '11:00'
-  open-pull-requests-limit: 30
-  target-branch: canary
-  versioning-strategy: increase
-- package-ecosystem: github-actions
-  directory: "/"
-  schedule:
-    interval: weekly
-    time: '11:00'
-  open-pull-requests-limit: 30
-  target-branch: canary
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      time: "11:00"
+    open-pull-requests-limit: 10
+    target-branch: canary
+    versioning-strategy: increase
+    groups:
+      xterm:
+        patterns:
+          - "@xterm/*"
+      types:
+        patterns:
+          - "@types/*"
+      eslint:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@typescript-eslint/*"
+      webpack:
+        patterns:
+          - "webpack"
+          - "webpack-*"
+          - "*-loader"
+          - "copy-webpack-plugin"
+          - "terser-webpack-plugin"
+      babel:
+        patterns:
+          - "@babel/*"
+          - "babel-*"
+
+  - package-ecosystem: npm
+    directory: "/app"
+    schedule:
+      interval: weekly
+      time: "11:00"
+    open-pull-requests-limit: 10
+    target-branch: canary
+    versioning-strategy: increase
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      time: "11:00"
+    open-pull-requests-limit: 10
+    target-branch: canary
