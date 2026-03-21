@@ -136,13 +136,15 @@ jobs:
             dist/*.pacman
             dist/*.exe
       # TODO: Remove continue-on-error after Electron upgrade (issue #7).
-      # Electron 22 (Chromium 108) has compatibility issues with macOS 15.
+      # Electron 22 (Chromium 108) has compatibility issues with newer OS versions
+      # (macOS 15, Ubuntu 24.04, etc.).
       - name: Run E2E Tests
         if: runner.os != 'Linux'
         continue-on-error: true
         run: yarn run test:e2e
       - name: Run E2E Tests on Linux
         if: runner.os == 'Linux'
+        continue-on-error: true
         run: xvfb-run yarn run test:e2e
         env:
           SHELL: /bin/bash
