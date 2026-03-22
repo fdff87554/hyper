@@ -1,8 +1,11 @@
-import React, {forwardRef, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
 import type {NotificationProps} from '../../typings/hyper';
 
-const Notification = forwardRef<HTMLDivElement, React.PropsWithChildren<NotificationProps>>((props, ref) => {
+const Notification = ({
+  ref,
+  ...props
+}: React.PropsWithChildren<NotificationProps> & {ref?: React.Ref<HTMLDivElement>}) => {
   const dismissTimer = useRef<NodeJS.Timeout | undefined>(undefined);
   const [dismissing, setDismissing] = useState(false);
 
@@ -39,7 +42,7 @@ const Notification = forwardRef<HTMLDivElement, React.PropsWithChildren<Notifica
 
       if (ref) {
         if (typeof ref === 'function') ref(el);
-        else ref.current = el;
+        else (ref as React.MutableRefObject<HTMLDivElement | null>).current = el;
       }
     }
   };
@@ -107,7 +110,7 @@ const Notification = forwardRef<HTMLDivElement, React.PropsWithChildren<Notifica
       `}</style>
     </div>
   );
-});
+};
 
 Notification.displayName = 'Notification';
 

@@ -1,4 +1,4 @@
-import React, {useCallback, useRef, useEffect, forwardRef} from 'react';
+import React, {useCallback, useRef, useEffect} from 'react';
 
 import {VscArrowDown} from '@react-icons/all-files/vsc/VscArrowDown';
 import {VscArrowUp} from '@react-icons/all-files/vsc/VscArrowUp';
@@ -84,7 +84,7 @@ const SearchButton = ({
   );
 };
 
-const SearchBox = forwardRef<HTMLDivElement, SearchBoxProps>((props, ref) => {
+const SearchBox = ({ref, ...props}: SearchBoxProps & {ref?: React.Ref<HTMLDivElement>}) => {
   const {
     caseSensitive,
     wholeWord,
@@ -230,7 +230,7 @@ const SearchBox = forwardRef<HTMLDivElement, SearchBoxProps>((props, ref) => {
       </style>
     </div>
   );
-});
+};
 
 SearchBox.displayName = 'SearchBox';
 

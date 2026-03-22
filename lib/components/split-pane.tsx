@@ -1,10 +1,10 @@
-import React, {useState, useEffect, useRef, forwardRef} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 
 import sum from 'lodash/sum';
 
 import type {SplitPaneProps} from '../../typings/hyper';
 
-const SplitPane = forwardRef<HTMLDivElement, SplitPaneProps>((props, ref) => {
+const SplitPane = ({ref, ...props}: SplitPaneProps & {ref?: React.Ref<HTMLDivElement>}) => {
   const dragPanePosition = useRef<number>(0);
   const dragTarget = useRef<HTMLDivElement | null>(null);
   const paneIndex = useRef<number>(0);
@@ -184,7 +184,7 @@ const SplitPane = forwardRef<HTMLDivElement, SplitPaneProps>((props, ref) => {
       `}</style>
     </div>
   );
-});
+};
 
 SplitPane.displayName = 'SplitPane';
 
