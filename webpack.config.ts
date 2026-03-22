@@ -104,7 +104,7 @@ const config: webpack.Configuration[] = [
       'php-escape-shell': 'require("./node_modules/php-escape-shell/php-escape-shell.js")',
       plist: 'require("./node_modules/plist/index.js")',
       'react-dom': 'require("./node_modules/react-dom/index.js")',
-      'react-redux': 'require("./node_modules/react-redux/lib/index.js")',
+      'react-redux': 'require("./node_modules/react-redux/dist/cjs/index.js")',
       react: 'require("./node_modules/react/index.js")',
       stylis: 'require("./node_modules/stylis/stylis.js")',
       '@xterm/addon-unicode11': 'require("./node_modules/@xterm/addon-unicode11/lib/addon-unicode11.js")',

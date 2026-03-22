@@ -114,6 +114,7 @@ export type uiState = {
 export type session = {
   cleared: boolean;
   cols: number | null;
+  cwd?: string;
   pid: number | null;
   resizeAt?: number;
   rows: number | null;

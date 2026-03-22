@@ -1,4 +1,5 @@
 import {configureStore} from '@reduxjs/toolkit';
+import {thunk} from 'redux-thunk';
 
 import rootReducer from '../reducers/index';
 import effects from '../utils/effects';
@@ -12,6 +13,7 @@ const configureStoreForProd = () =>
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({serializableCheck: false, immutableCheck: false}).concat(
         plugins.middleware,
+        thunk,
         writeMiddleware,
         effects
       ),

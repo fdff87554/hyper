@@ -100,7 +100,7 @@ const reducer: ISessionReducer = (state = initialState, action) =>
 
       case SESSION_SET_CWD:
         if (state.sessions[action.uid]) {
-          (draft.sessions[action.uid] as session & {cwd?: string}).cwd = action.cwd;
+          draft.sessions[action.uid].cwd = action.cwd;
         }
         break;
     }
