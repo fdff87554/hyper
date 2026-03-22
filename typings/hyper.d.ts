@@ -1,6 +1,5 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable import/order */
-import type {Immutable} from 'seamless-immutable';
 import type Client from '../lib/utils/rpc';
 
 declare global {
@@ -23,28 +22,28 @@ declare global {
   const __non_webpack_require__: NodeRequire;
 }
 
-export type ITermGroup = Immutable<{
+export type ITermGroup = {
   uid: string;
   sessionUid: string | null;
   parentUid: string | null;
   direction: 'HORIZONTAL' | 'VERTICAL' | null;
   sizes: number[] | null;
   children: string[];
-}>;
+};
 
-export type ITermGroups = Immutable<Record<string, ITermGroup>>;
+export type ITermGroups = Record<string, ITermGroup>;
 
-export type ITermState = Immutable<{
-  termGroups: Mutable<ITermGroups>;
+export type ITermState = {
+  termGroups: ITermGroups;
   activeSessions: Record<string, string>;
   activeRootGroup: string | null;
-}>;
+};
 
 export type cursorShapes = 'BEAM' | 'UNDERLINE' | 'BLOCK';
 import type {FontWeight, IWindowsPty, Terminal} from '@xterm/xterm';
 import type {ColorMap, configOptions} from './config';
 
-export type uiState = Immutable<{
+export type uiState = {
   _lastUpdate: number | null;
   activeUid: string | null;
   activityMarkers: Record<string, boolean>;
@@ -110,7 +109,7 @@ export type uiState = Immutable<{
   windowsPty?: IWindowsPty;
   defaultProfile: string;
   profiles: configOptions['profiles'];
-}>;
+};
 
 export type session = {
   cleared: boolean;
@@ -127,11 +126,11 @@ export type session = {
   profile: string;
 };
 
-export type sessionState = Immutable<{
+export type sessionState = {
   sessions: Record<string, session>;
   activeUid: string | null;
   write?: {uid: string; data: string};
-}>;
+};
 
 export type ITermGroupReducer = Reducer<ITermState, HyperActions>;
 
@@ -139,7 +138,7 @@ export type IUiReducer = Reducer<uiState, HyperActions>;
 
 export type ISessionReducer = Reducer<sessionState, HyperActions>;
 
-import type {Middleware, Reducer, Dispatch} from 'redux';
+import type {Middleware, Reducer, Dispatch} from '@reduxjs/toolkit';
 
 type PropsMapper<P> = (state: HyperState, ownProps: P) => Record<string, unknown>;
 type DispatchMapper<P> = (dispatch: Dispatch, ownProps: P) => Record<string, unknown>;
@@ -270,7 +269,7 @@ export type SplitPaneProps = {
   borderColor: string;
   direction: 'horizontal' | 'vertical';
   onResize: (sizes: number[]) => void;
-  sizes?: Immutable<number[]> | null;
+  sizes?: number[] | null;
   children: ReactNode[];
 };
 
@@ -377,7 +376,7 @@ export type TermProps = {
   letterSpacing: number;
   lineHeight: number;
   macOptionSelectionMode: string;
-  modifierKeys: Immutable<{altIsMeta: boolean; cmdIsMeta: boolean}>;
+  modifierKeys: {altIsMeta: boolean; cmdIsMeta: boolean};
   onActive: () => void;
   onCloseSearch: () => void;
   onContextMenu: (selection: any) => void;
@@ -405,9 +404,5 @@ export type TermProps = {
 } & extensionProps;
 
 // Utility types
-
-export type Mutable<T> = T extends Immutable<infer U> ? (Exclude<U, T> extends never ? U : Exclude<U, T>) : T;
-
-export type immutableRecord<T> = {[k in keyof T]: Immutable<T[k]>};
 
 export type Assignable<T, U> = {[k in keyof U]: k extends keyof T ? T[k] : U[k]} & Partial<T>;

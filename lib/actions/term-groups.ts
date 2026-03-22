@@ -79,7 +79,7 @@ const findFirstSession = (state: ITermState, group: ITermGroup): string | undefi
     return group.sessionUid;
   }
 
-  for (const childUid of group.children.asMutable()) {
+  for (const childUid of group.children) {
     const child = state.termGroups[childUid];
     // We want to find the *leftmost* session,
     // even if it's nested deep down:
@@ -107,7 +107,7 @@ const findNextSessionUid = (state: ITermState, group: ITermGroup) => {
   }
 
   const {children} = state.termGroups[group.parentUid!];
-  const nextUid = findPrevious(children.asMutable(), group.uid);
+  const nextUid = findPrevious(children, group.uid);
   return findFirstSession(state, state.termGroups[nextUid]);
 };
 

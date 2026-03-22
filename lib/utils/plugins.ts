@@ -5,10 +5,9 @@ import {ipcRenderer as _ipcRenderer} from 'electron';
 import React, {PureComponent} from 'react';
 import type {ComponentType} from 'react';
 
+import type {Dispatch, Middleware} from '@reduxjs/toolkit';
 import ReactDOM from 'react-dom';
 import {connect as reduxConnect} from 'react-redux';
-import type {ConnectOptions} from 'react-redux/es/components/connect';
-import type {Dispatch, Middleware} from 'redux';
 
 import type {
   hyperPlugin,
@@ -459,7 +458,7 @@ export function connect<stateProps extends {}, dispatchProps>(
   stateFn: (state: HyperState) => stateProps,
   dispatchFn: (dispatch: HyperDispatch) => dispatchProps,
   c: null | undefined,
-  d: ConnectOptions = {}
+  d: Record<string, unknown> = {}
 ) {
   return <P extends Record<string, unknown>>(
     Class: ComponentType<P & stateProps & dispatchProps>,

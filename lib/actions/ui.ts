@@ -120,9 +120,10 @@ const findChildSessions = (termGroups: ITermGroups, uid: string): string[] => {
     return [uid];
   }
 
-  return group.children
-    .asMutable()
-    .reduce((total: string[], childUid: string) => total.concat(findChildSessions(termGroups, childUid)), []);
+  return group.children.reduce(
+    (total: string[], childUid: string) => total.concat(findChildSessions(termGroups, childUid)),
+    []
+  );
 };
 
 // Get the index of the next or previous group,

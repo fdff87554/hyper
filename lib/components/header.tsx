@@ -142,7 +142,7 @@ const Header = ({ref, ...props}: HeaderProps & {ref?: React.Ref<HTMLElement>}) =
           onChange: onChangeIntent,
           fullScreen: props.fullScreen,
           defaultProfile: props.defaultProfile,
-          profiles: props.profiles.asMutable({deep: true}),
+          profiles: props.profiles,
           openNewTab: props.openNewTab
         })}
       />

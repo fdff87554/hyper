@@ -1,17 +1,21 @@
-import {createStore, applyMiddleware} from 'redux';
-import _thunk from 'redux-thunk';
-import type {ThunkMiddleware} from 'redux-thunk';
+import {configureStore} from '@reduxjs/toolkit';
 
-import type {HyperState, HyperActions} from '../../typings/hyper';
 import rootReducer from '../reducers/index';
 import effects from '../utils/effects';
 import * as plugins from '../utils/plugins';
 
 import writeMiddleware from './write-middleware';
 
-const thunk: ThunkMiddleware<HyperState, HyperActions> = _thunk;
-
 const configureStoreForProd = () =>
-  createStore(rootReducer, applyMiddleware(thunk, plugins.middleware, thunk, writeMiddleware, effects));
+  configureStore({
+    reducer: rootReducer,
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({serializableCheck: false, immutableCheck: false}).concat(
+        plugins.middleware,
+        writeMiddleware,
+        effects
+      ),
+    devTools: false
+  });
 
 export default configureStoreForProd;

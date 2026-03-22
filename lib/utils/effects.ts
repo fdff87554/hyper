@@ -1,4 +1,4 @@
-import type {Dispatch, Middleware} from 'redux';
+import type {Dispatch, Middleware} from '@reduxjs/toolkit';
 
 import type {HyperActions, HyperState} from '../../typings/hyper';
 /**
@@ -9,11 +9,12 @@ import type {HyperActions, HyperState} from '../../typings/hyper';
  * defer or add to existing side effects at will
  * as the result of an action being triggered.
  */
-const effectsMiddleware: Middleware<{}, HyperState, Dispatch<HyperActions>> = () => (next) => (action) => {
+const effectsMiddleware: Middleware<{}, HyperState, Dispatch<HyperActions>> = () => (next) => (action: unknown) => {
   const ret = next(action);
-  if (action.effect) {
-    action.effect();
-    delete action.effect;
+  const act = action as HyperActions & {effect?: () => void};
+  if (act.effect) {
+    act.effect();
+    delete act.effect;
   }
 
   return ret;

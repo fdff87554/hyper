@@ -48,7 +48,7 @@ const SplitPane = ({ref, ...props}: SplitPaneProps & {ref?: React.Ref<HTMLDivEle
     let sizes_: number[];
 
     if (sizes) {
-      sizes_ = [...sizes.asMutable()];
+      sizes_ = [...sizes];
     } else {
       const total = props.children.length;
       const count = new Array<number>(total).fill(1 / total);
