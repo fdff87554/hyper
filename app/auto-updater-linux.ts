@@ -1,6 +1,6 @@
 import {EventEmitter} from 'events';
 
-import fetch from 'electron-fetch';
+import {net} from 'electron';
 
 class AutoUpdater extends EventEmitter implements Electron.AutoUpdater {
   updateURL!: string;
@@ -21,7 +21,8 @@ class AutoUpdater extends EventEmitter implements Electron.AutoUpdater {
     }
     this.emit('checking-for-update');
 
-    fetch(this.updateURL)
+    net
+      .fetch(this.updateURL)
       .then((res) => {
         if (res.status === 204) {
           this.emit('update-not-available');

@@ -22,7 +22,7 @@ import {resolve} from 'path';
 // Packages
 import {app, BrowserWindow, Menu, screen} from 'electron';
 
-import isDev from 'electron-is-dev';
+const isDev = !app.isPackaged;
 import {gitDescribe} from 'git-describe';
 
 import * as AppMenu from './menus/menu';
@@ -181,7 +181,7 @@ app.on('ready', () =>
               }
             }
           ]);
-          app.dock.setMenu(dockMenu);
+          app.dock?.setMenu(dockMenu);
         }
 
         Menu.setApplicationMenu(AppMenu.buildMenu(menu));
