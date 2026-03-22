@@ -1,4 +1,4 @@
-import Immutable from 'seamless-immutable';
+import {produce} from 'immer';
 
 import {
   SESSION_ADD,
@@ -12,16 +12,16 @@ import {
   SESSION_SET_CWD,
   SESSION_SEARCH
 } from '../../typings/constants/sessions';
-import type {sessionState, session, Mutable, ISessionReducer} from '../../typings/hyper';
+import type {sessionState, session, ISessionReducer} from '../../typings/hyper';
 import {decorateSessionsReducer} from '../utils/plugins';
 
-const initialState: sessionState = Immutable<Mutable<sessionState>>({
+const initialState: sessionState = {
   sessions: {},
   activeUid: null
-});
+};
 
-function Session(obj: Immutable.DeepPartial<session>) {
-  const x: session = {
+function createSession(obj: Partial<session>): session {
+  return {
     uid: '',
     title: '',
     cols: null,
@@ -30,106 +30,80 @@ function Session(obj: Immutable.DeepPartial<session>) {
     search: false,
     shell: '',
     pid: null,
-    profile: ''
+    profile: '',
+    ...obj
   };
-  return Immutable(x).merge(obj);
 }
 
-function deleteSession(state: sessionState, uid: string) {
-  return state.updateIn(['sessions'], (sessions: (typeof state)['sessions']) => {
-    const sessions_ = sessions.asMutable();
-    delete sessions_[uid];
-    return sessions_;
-  });
-}
-
-const reducer: ISessionReducer = (state = initialState, action) => {
-  switch (action.type) {
-    case SESSION_ADD:
-      return state.set('activeUid', action.uid).setIn(
-        ['sessions', action.uid],
-        Session({
+const reducer: ISessionReducer = (state = initialState, action) =>
+  produce(state, (draft) => {
+    switch (action.type) {
+      case SESSION_ADD:
+        draft.activeUid = action.uid;
+        draft.sessions[action.uid] = createSession({
           cols: action.cols,
           rows: action.rows,
           uid: action.uid,
           shell: action.shell ? action.shell.split('/').pop() : null,
           pid: action.pid,
           profile: action.profile
-        })
-      );
+        });
+        break;
 
-    case SESSION_SET_ACTIVE:
-      return state.set('activeUid', action.uid);
+      case SESSION_SET_ACTIVE:
+        draft.activeUid = action.uid;
+        break;
 
-    case SESSION_SEARCH:
-      return state.setIn(['sessions', action.uid, 'search'], action.value);
+      case SESSION_SEARCH:
+        draft.sessions[action.uid].search = action.value;
+        break;
 
-    case SESSION_CLEAR_ACTIVE:
-      return state.merge(
-        {
-          sessions: {
-            [state.activeUid!]: {
-              cleared: true
-            }
-          }
-        },
-        {deep: true}
-      );
+      case SESSION_CLEAR_ACTIVE:
+        if (draft.activeUid && draft.sessions[draft.activeUid]) {
+          draft.sessions[draft.activeUid].cleared = true;
+        }
+        break;
 
-    case SESSION_PTY_DATA:
-      // we avoid a direct merge for perf reasons
-      // as this is the most common action
-      if (state.sessions[action.uid]?.cleared) {
-        return state.merge(
-          {
-            sessions: {
-              [action.uid]: {
-                cleared: false
-              }
-            }
-          },
-          {deep: true}
-        );
-      }
-      return state;
+      case SESSION_PTY_DATA:
+        // we avoid a direct merge for perf reasons
+        // as this is the most common action
+        if (state.sessions[action.uid]?.cleared) {
+          draft.sessions[action.uid].cleared = false;
+        }
+        break;
 
-    case SESSION_PTY_EXIT:
-      if (state.sessions[action.uid]) {
-        return deleteSession(state, action.uid);
-      }
-      console.log('ignore pty exit: session removed by user');
-      return state;
+      case SESSION_PTY_EXIT:
+        if (state.sessions[action.uid]) {
+          delete draft.sessions[action.uid];
+        } else {
+          console.log('ignore pty exit: session removed by user');
+        }
+        break;
 
-    case SESSION_USER_EXIT:
-      return deleteSession(state, action.uid);
+      case SESSION_USER_EXIT:
+        delete draft.sessions[action.uid];
+        break;
 
-    case SESSION_SET_XTERM_TITLE:
-      return state.setIn(
-        ['sessions', action.uid, 'title'],
+      case SESSION_SET_XTERM_TITLE:
         // we need to trim the title because `cmd.exe`
         // likes to report ' ' as the title
-        action.title.trim()
-      );
+        draft.sessions[action.uid].title = action.title.trim();
+        break;
 
-    case SESSION_RESIZE:
-      return state.setIn(
-        ['sessions', action.uid],
-        state.sessions[action.uid].merge({
+      case SESSION_RESIZE:
+        Object.assign(draft.sessions[action.uid], {
           rows: action.rows,
           cols: action.cols,
           resizeAt: action.now
-        })
-      );
+        });
+        break;
 
-    case SESSION_SET_CWD:
-      if (state.sessions[action.uid]) {
-        return state.setIn(['sessions', action.uid, 'cwd'], action.cwd);
-      }
-      return state;
-
-    default:
-      return state;
-  }
-};
+      case SESSION_SET_CWD:
+        if (state.sessions[action.uid]) {
+          draft.sessions[action.uid].cwd = action.cwd;
+        }
+        break;
+    }
+  });
 
 export default decorateSessionsReducer(reducer);

@@ -1,4 +1,4 @@
-import React, {forwardRef} from 'react';
+import React from 'react';
 
 import type {TabsProps} from '../../typings/hyper';
 import {decorate, getTabProps} from '../utils/plugins';
@@ -9,7 +9,7 @@ import Tab_ from './tab';
 const Tab = decorate(Tab_, 'Tab');
 const isMac = /Mac/.test(navigator.userAgent);
 
-const Tabs = forwardRef<HTMLElement, TabsProps>((props, ref) => {
+const Tabs = ({ref, ...props}: TabsProps & {ref?: React.Ref<HTMLElement>}) => {
   const {tabs = [], borderColor, onChange, onClose, fullScreen} = props;
 
   const hide = !isMac && tabs.length === 1;
@@ -106,7 +106,7 @@ const Tabs = forwardRef<HTMLElement, TabsProps>((props, ref) => {
       `}</style>
     </nav>
   );
-});
+};
 
 Tabs.displayName = 'Tabs';
 

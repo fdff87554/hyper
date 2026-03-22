@@ -1,7 +1,6 @@
 import {release} from 'os';
 
-import Immutable from 'seamless-immutable';
-import type {Immutable as ImmutableType} from 'seamless-immutable';
+import {produce} from 'immer';
 
 import {CONFIG_LOAD, CONFIG_RELOAD} from '../../typings/constants/config';
 import {NOTIFICATION_MESSAGE, NOTIFICATION_DISMISS} from '../../typings/constants/notifications';
@@ -24,7 +23,7 @@ import {
   UI_LEAVE_FULLSCREEN
 } from '../../typings/constants/ui';
 import {UPDATE_AVAILABLE} from '../../typings/constants/updater';
-import type {uiState, Mutable, IUiReducer} from '../../typings/hyper';
+import type {uiState, IUiReducer} from '../../typings/hyper';
 import {decorateUIReducer} from '../utils/plugins';
 
 const isWindows = ['Windows', 'Win16', 'Win32', 'WinCE'].includes(navigator.platform) || process.platform === 'win32';
@@ -36,7 +35,7 @@ const allowedHamburgerMenuValues = new Set([true, false, ''] as const);
 const allowedWindowControlsValues = new Set([true, false, 'left']);
 
 // Populate `config-default.js` from this :)
-const initial: uiState = Immutable<Mutable<uiState>>({
+const initial: uiState = {
   cols: null,
   rows: null,
   scrollback: 1000,
@@ -118,364 +117,308 @@ const initial: uiState = Immutable<Mutable<uiState>>({
   screenReaderMode: false,
   defaultProfile: '',
   profiles: []
-});
+};
 
 const reducer: IUiReducer = (state = initial, action) => {
-  let state_ = state;
-  let isMax;
-  switch (action.type) {
-    case CONFIG_LOAD:
-    case CONFIG_RELOAD: {
-      const {config, now} = action;
-      state_ = state
+  return produce(state, (draft) => {
+    switch (action.type) {
+      case CONFIG_LOAD:
+      case CONFIG_RELOAD: {
+        const {config, now} = action;
+
         // unset the user font size override if the
         // font size changed from the config
-        .merge(
-          (() => {
-            const ret: Immutable.DeepPartial<Mutable<uiState>> = {};
+        if (config.scrollback) {
+          draft.scrollback = config.scrollback;
+        }
 
-            if (config.scrollback) {
-              ret.scrollback = config.scrollback;
-            }
+        if (state.fontSizeOverride && config.fontSize !== state.fontSize) {
+          draft.fontSizeOverride = null;
+        }
 
-            if (state.fontSizeOverride && config.fontSize !== state.fontSize) {
-              ret.fontSizeOverride = null;
-            }
+        if (config.fontSize) {
+          draft.fontSize = config.fontSize;
+        }
 
-            if (config.fontSize) {
-              ret.fontSize = config.fontSize;
-            }
+        if (config.fontFamily) {
+          draft.fontFamily = config.fontFamily;
+        }
 
-            if (config.fontFamily) {
-              ret.fontFamily = config.fontFamily;
-            }
+        if (config.uiFontFamily) {
+          draft.uiFontFamily = config.uiFontFamily;
+        }
 
-            if (config.uiFontFamily) {
-              ret.uiFontFamily = config.uiFontFamily;
-            }
+        if (config.fontWeight) {
+          draft.fontWeight = config.fontWeight;
+        }
 
-            if (config.fontWeight) {
-              ret.fontWeight = config.fontWeight;
-            }
+        if (config.fontWeightBold) {
+          draft.fontWeightBold = config.fontWeightBold;
+        }
 
-            if (config.fontWeightBold) {
-              ret.fontWeightBold = config.fontWeightBold;
-            }
+        if (Number.isFinite(config.lineHeight)) {
+          draft.lineHeight = config.lineHeight;
+        }
 
-            if (Number.isFinite(config.lineHeight)) {
-              ret.lineHeight = config.lineHeight;
-            }
+        if (Number.isFinite(config.letterSpacing)) {
+          draft.letterSpacing = config.letterSpacing;
+        }
 
-            if (Number.isFinite(config.letterSpacing)) {
-              ret.letterSpacing = config.letterSpacing;
-            }
+        if (config.cursorColor) {
+          draft.cursorColor = config.cursorColor;
+        }
 
-            if (config.uiFontFamily) {
-              ret.uiFontFamily = config.uiFontFamily;
-            }
+        if (config.cursorAccentColor) {
+          draft.cursorAccentColor = config.cursorAccentColor;
+        }
 
-            if (config.cursorColor) {
-              ret.cursorColor = config.cursorColor;
-            }
+        if (allowedCursorShapes.has(config.cursorShape)) {
+          draft.cursorShape = config.cursorShape;
+        }
 
-            if (config.cursorAccentColor) {
-              ret.cursorAccentColor = config.cursorAccentColor;
-            }
+        if (allowedCursorBlinkValues.has(config.cursorBlink)) {
+          draft.cursorBlink = config.cursorBlink;
+        }
 
-            if (allowedCursorShapes.has(config.cursorShape)) {
-              ret.cursorShape = config.cursorShape;
-            }
+        if (config.borderColor) {
+          draft.borderColor = config.borderColor;
+        }
 
-            if (allowedCursorBlinkValues.has(config.cursorBlink)) {
-              ret.cursorBlink = config.cursorBlink;
-            }
+        if (config.selectionColor) {
+          draft.selectionColor = config.selectionColor;
+        }
 
-            if (config.borderColor) {
-              ret.borderColor = config.borderColor;
-            }
+        if (typeof config.padding !== 'undefined' && config.padding !== null) {
+          draft.padding = config.padding;
+        }
 
-            if (config.selectionColor) {
-              ret.selectionColor = config.selectionColor;
-            }
+        if (config.foregroundColor) {
+          draft.foregroundColor = config.foregroundColor;
+        }
 
-            if (typeof config.padding !== 'undefined' && config.padding !== null) {
-              ret.padding = config.padding;
-            }
+        if (config.backgroundColor) {
+          draft.backgroundColor = config.backgroundColor;
+        }
 
-            if (config.foregroundColor) {
-              ret.foregroundColor = config.foregroundColor;
-            }
+        if (config.css || config.css === '') {
+          draft.css = config.css;
+        }
 
-            if (config.backgroundColor) {
-              ret.backgroundColor = config.backgroundColor;
-            }
+        if (config.termCSS) {
+          draft.termCSS = config.termCSS;
+        }
 
-            if (config.css || config.css === '') {
-              ret.css = config.css;
-            }
+        if (allowedBells.has(config.bell)) {
+          draft.bell = (config.bell as any) === 'false' ? false : config.bell;
+        }
 
-            if (config.termCSS) {
-              ret.termCSS = config.termCSS;
-            }
+        if (config.bellSoundURL !== state.bellSoundURL) {
+          draft.bellSoundURL = config.bellSoundURL || initial.bellSoundURL;
+        }
 
-            if (allowedBells.has(config.bell)) {
-              ret.bell = (config.bell as any) === 'false' ? false : config.bell;
-            }
+        if (config.bellSound !== state.bellSound) {
+          draft.bellSound = config.bellSound || initial.bellSound;
+        }
 
-            if (config.bellSoundURL !== state.bellSoundURL) {
-              ret.bellSoundURL = config.bellSoundURL || initial.bellSoundURL;
-            }
+        if (typeof config.copyOnSelect !== 'undefined' && config.copyOnSelect !== null) {
+          draft.copyOnSelect = config.copyOnSelect;
+        }
 
-            if (config.bellSound !== state.bellSound) {
-              ret.bellSound = config.bellSound || initial.bellSound;
-            }
+        if (config.colors) {
+          if (JSON.stringify(state.colors) !== JSON.stringify(config.colors)) {
+            draft.colors = config.colors;
+          }
+        }
 
-            if (typeof config.copyOnSelect !== 'undefined' && config.copyOnSelect !== null) {
-              ret.copyOnSelect = config.copyOnSelect;
-            }
+        if (config.modifierKeys) {
+          draft.modifierKeys = config.modifierKeys;
+        }
 
-            if (config.colors) {
-              if (JSON.stringify(state.colors) !== JSON.stringify(config.colors)) {
-                ret.colors = config.colors;
-              }
-            }
+        if (allowedHamburgerMenuValues.has(config.showHamburgerMenu)) {
+          draft.showHamburgerMenu = config.showHamburgerMenu;
+        }
 
-            if (config.modifierKeys) {
-              ret.modifierKeys = config.modifierKeys;
-            }
+        if (allowedWindowControlsValues.has(config.showWindowControls)) {
+          draft.showWindowControls = config.showWindowControls;
+        }
 
-            if (allowedHamburgerMenuValues.has(config.showHamburgerMenu)) {
-              ret.showHamburgerMenu = config.showHamburgerMenu;
-            }
+        if (process.platform === 'win32' && (config.quickEdit === undefined || config.quickEdit === null)) {
+          draft.quickEdit = true;
+        } else if (typeof config.quickEdit !== 'undefined' && config.quickEdit !== null) {
+          draft.quickEdit = config.quickEdit;
+        }
 
-            if (allowedWindowControlsValues.has(config.showWindowControls)) {
-              ret.showWindowControls = config.showWindowControls;
-            }
+        if (config.webGLRenderer !== undefined) {
+          draft.webGLRenderer = config.webGLRenderer;
+        }
 
-            if (process.platform === 'win32' && (config.quickEdit === undefined || config.quickEdit === null)) {
-              ret.quickEdit = true;
-            } else if (typeof config.quickEdit !== 'undefined' && config.quickEdit !== null) {
-              ret.quickEdit = config.quickEdit;
-            }
+        if (config.webLinksActivationKey !== undefined) {
+          draft.webLinksActivationKey = config.webLinksActivationKey;
+        }
 
-            if (config.webGLRenderer !== undefined) {
-              ret.webGLRenderer = config.webGLRenderer;
-            }
+        if (config.macOptionSelectionMode) {
+          draft.macOptionSelectionMode = config.macOptionSelectionMode;
+        }
 
-            if (config.webLinksActivationKey !== undefined) {
-              ret.webLinksActivationKey = config.webLinksActivationKey;
-            }
+        if (config.disableLigatures !== undefined) {
+          draft.disableLigatures = config.disableLigatures;
+        }
 
-            if (config.macOptionSelectionMode) {
-              ret.macOptionSelectionMode = config.macOptionSelectionMode;
-            }
+        if (config.screenReaderMode !== undefined) {
+          draft.screenReaderMode = config.screenReaderMode;
+        }
 
-            if (config.disableLigatures !== undefined) {
-              ret.disableLigatures = config.disableLigatures;
-            }
+        const buildNumber = parseInt(release().split('.').at(-1) || '0', 10);
+        if (isWindows && !Number.isNaN(buildNumber) && buildNumber > 0) {
+          const useConpty = typeof config.useConpty === 'boolean' ? config.useConpty : buildNumber >= 18309;
+          draft.windowsPty = {
+            backend: useConpty ? 'conpty' : 'winpty',
+            buildNumber
+          };
+        }
 
-            if (config.screenReaderMode !== undefined) {
-              ret.screenReaderMode = config.screenReaderMode;
-            }
+        if (config.imageSupport !== undefined) {
+          draft.imageSupport = config.imageSupport;
+        }
 
-            const buildNumber = parseInt(release().split('.').at(-1) || '0', 10);
-            if (isWindows && !Number.isNaN(buildNumber) && buildNumber > 0) {
-              const useConpty = typeof config.useConpty === 'boolean' ? config.useConpty : buildNumber >= 18309;
-              ret.windowsPty = {
-                backend: useConpty ? 'conpty' : 'winpty',
-                buildNumber
-              };
-            }
+        if (config.defaultProfile !== undefined) {
+          draft.defaultProfile = config.defaultProfile;
+        }
 
-            if (config.imageSupport !== undefined) {
-              ret.imageSupport = config.imageSupport;
-            }
+        if (config.profiles !== undefined) {
+          draft.profiles = config.profiles;
+        }
 
-            if (config.defaultProfile !== undefined) {
-              ret.defaultProfile = config.defaultProfile;
-            }
+        draft._lastUpdate = now ?? null;
+        break;
+      }
 
-            if (config.profiles !== undefined) {
-              ret.profiles = config.profiles;
-            }
+      case SESSION_ADD:
+        draft.activeUid = action.uid;
+        draft.openAt[action.uid] = action.now;
+        break;
 
-            ret._lastUpdate = now;
+      case SESSION_RESIZE:
+        // only care about the sizes
+        // of standalone terms (i.e. not splits):
+        if (!action.isStandaloneTerm) {
+          break;
+        }
 
-            return ret;
-          })()
-        );
-      break;
+        draft.rows = action.rows;
+        draft.cols = action.cols;
+        draft.resizeAt = action.now;
+        break;
+
+      case SESSION_PTY_EXIT:
+        delete draft.openAt[action.uid];
+        delete draft.activityMarkers[action.uid];
+        break;
+
+      case SESSION_SET_ACTIVE:
+        draft.activeUid = action.uid;
+        draft.activityMarkers[action.uid] = false;
+        break;
+
+      case SESSION_PTY_DATA:
+        // ignore activity markers for current tab
+        if (action.uid === state.activeUid) {
+          break;
+        }
+
+        // if first data events after open, ignore
+        if (action.now - state.openAt[action.uid] < 1000) {
+          break;
+        }
+
+        // ignore activity markers that are within
+        // proximity of a resize event, since we
+        // expect to get data packets from the resize
+        // of the ptys as a result
+        if (!state.resizeAt || action.now - state.resizeAt > 1000) {
+          draft.activityMarkers[action.uid] = true;
+        }
+        break;
+
+      case SESSION_SET_CWD:
+        if (action.uid === state.activeUid) {
+          draft.cwd = action.cwd;
+        }
+        break;
+
+      case UI_FONT_SIZE_SET:
+        draft.fontSizeOverride = action.value;
+        break;
+
+      case UI_FONT_SIZE_RESET:
+        draft.fontSizeOverride = null;
+        break;
+
+      case UI_FONT_SMOOTHING_SET:
+        draft.fontSmoothingOverride = action.fontSmoothing;
+        break;
+
+      case UI_WINDOW_MAXIMIZE:
+        draft.maximized = true;
+        break;
+
+      case UI_WINDOW_UNMAXIMIZE:
+        draft.maximized = false;
+        break;
+
+      case UI_WINDOW_GEOMETRY_CHANGED: {
+        const isMax = action.isMaximized;
+        if (state.maximized !== isMax) {
+          draft.maximized = isMax;
+        }
+        break;
+      }
+
+      case NOTIFICATION_DISMISS:
+        draft.notifications[action.id as keyof typeof state.notifications] = false;
+        break;
+
+      case NOTIFICATION_MESSAGE:
+        draft.messageText = action.text;
+        draft.messageURL = action.url;
+        draft.messageDismissable = action.dismissable === true;
+        break;
+
+      case UPDATE_AVAILABLE:
+        draft.updateVersion = action.version;
+        draft.updateNotes = action.notes || '';
+        draft.updateReleaseUrl = action.releaseUrl;
+        draft.updateCanInstall = !!action.canInstall;
+        break;
+
+      case UI_ENTER_FULLSCREEN:
+        draft.fullScreen = true;
+        break;
+
+      case UI_LEAVE_FULLSCREEN:
+        draft.fullScreen = false;
+        break;
     }
-    case SESSION_ADD:
-      state_ = state.merge(
-        {
-          activeUid: action.uid,
-          openAt: {
-            [action.uid]: action.now
-          }
-        },
-        {deep: true}
-      );
-      break;
 
-    case SESSION_RESIZE:
-      // only care about the sizes
-      // of standalone terms (i.e. not splits):
-      if (!action.isStandaloneTerm) {
-        break;
+    // Show a notification if any of the font size values have changed
+    if (CONFIG_LOAD !== action.type) {
+      if (draft.fontSize !== state.fontSize || draft.fontSizeOverride !== state.fontSizeOverride) {
+        draft.notifications.font = true;
       }
-
-      state_ = state.merge({
-        rows: action.rows,
-        cols: action.cols,
-        resizeAt: action.now
-      });
-      break;
-
-    case SESSION_PTY_EXIT:
-      state_ = state
-        .updateIn(['openAt'], (times: ImmutableType<Record<string, number>>) => {
-          const times_ = times.asMutable();
-          delete times_[action.uid];
-          return times_;
-        })
-        .updateIn(['activityMarkers'], (markers: ImmutableType<Record<string, boolean>>) => {
-          const markers_ = markers.asMutable();
-          delete markers_[action.uid];
-          return markers_;
-        });
-      break;
-
-    case SESSION_SET_ACTIVE:
-      state_ = state.merge(
-        {
-          activeUid: action.uid,
-          activityMarkers: {
-            [action.uid]: false
-          }
-        },
-        {deep: true}
-      );
-      break;
-
-    case SESSION_PTY_DATA:
-      // ignore activity markers for current tab
-      if (action.uid === state.activeUid) {
-        break;
-      }
-
-      // if first data events after open, ignore
-      if (action.now - state.openAt[action.uid] < 1000) {
-        break;
-      }
-
-      // ignore activity markers that are within
-      // proximity of a resize event, since we
-      // expect to get data packets from the resize
-      // of the ptys as a result
-      if (!state.resizeAt || action.now - state.resizeAt > 1000) {
-        state_ = state.merge(
-          {
-            activityMarkers: {
-              [action.uid]: true
-            }
-          },
-          {deep: true}
-        );
-      }
-      break;
-
-    case SESSION_SET_CWD:
-      if (action.uid === state.activeUid) {
-        state_ = state.set('cwd', action.cwd);
-      }
-      break;
-
-    case UI_FONT_SIZE_SET:
-      state_ = state.set('fontSizeOverride', action.value);
-      break;
-
-    case UI_FONT_SIZE_RESET:
-      state_ = state.set('fontSizeOverride', null);
-      break;
-
-    case UI_FONT_SMOOTHING_SET:
-      state_ = state.set('fontSmoothingOverride', action.fontSmoothing);
-      break;
-
-    case UI_WINDOW_MAXIMIZE:
-      state_ = state.set('maximized', true);
-      break;
-
-    case UI_WINDOW_UNMAXIMIZE:
-      state_ = state.set('maximized', false);
-      break;
-
-    case UI_WINDOW_GEOMETRY_CHANGED:
-      isMax = action.isMaximized;
-      if (state.maximized !== isMax) {
-        state_ = state.set('maximized', isMax);
-      }
-
-      break;
-
-    case NOTIFICATION_DISMISS:
-      state_ = state.merge(
-        {
-          notifications: {
-            [action.id]: false
-          }
-        },
-        {deep: true}
-      );
-      break;
-
-    case NOTIFICATION_MESSAGE:
-      state_ = state.merge({
-        messageText: action.text,
-        messageURL: action.url,
-        messageDismissable: action.dismissable === true
-      });
-      break;
-
-    case UPDATE_AVAILABLE:
-      state_ = state.merge({
-        updateVersion: action.version,
-        updateNotes: action.notes || '',
-        updateReleaseUrl: action.releaseUrl,
-        updateCanInstall: !!action.canInstall
-      });
-      break;
-
-    case UI_ENTER_FULLSCREEN:
-      state_ = state.set('fullScreen', true);
-      break;
-
-    case UI_LEAVE_FULLSCREEN:
-      state_ = state.set('fullScreen', false);
-      break;
-  }
-
-  // Show a notification if any of the font size values have changed
-  if (CONFIG_LOAD !== action.type) {
-    if (state_.fontSize !== state.fontSize || state_.fontSizeOverride !== state.fontSizeOverride) {
-      state_ = state_.merge({notifications: {font: true}}, {deep: true});
     }
-  }
 
-  if (state.cols !== null && state.rows !== null && (state.rows !== state_.rows || state.cols !== state_.cols)) {
-    state_ = state_.merge({notifications: {resize: true}}, {deep: true});
-  }
+    if (state.cols !== null && state.rows !== null && (state.rows !== draft.rows || state.cols !== draft.cols)) {
+      draft.notifications.resize = true;
+    }
 
-  if (state.messageText !== state_.messageText || state.messageURL !== state_.messageURL) {
-    state_ = state_.merge({notifications: {message: true}}, {deep: true});
-  }
+    if (state.messageText !== draft.messageText || state.messageURL !== draft.messageURL) {
+      draft.notifications.message = true;
+    }
 
-  if (state.updateVersion !== state_.updateVersion) {
-    state_ = state_.merge({notifications: {updates: true}}, {deep: true});
-  }
-
-  return state_;
+    if (state.updateVersion !== draft.updateVersion) {
+      draft.notifications.updates = true;
+    }
+  });
 };
 
 export default decorateUIReducer(reducer);

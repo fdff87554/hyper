@@ -1,4 +1,4 @@
-import React, {forwardRef} from 'react';
+import React from 'react';
 
 import type {NotificationsProps} from '../../typings/hyper';
 import {decorate} from '../utils/plugins';
@@ -16,7 +16,7 @@ const handleExternalLink = (ev: React.MouseEvent<HTMLAnchorElement>) => {
   }
 };
 
-const Notifications = forwardRef<HTMLDivElement, NotificationsProps>((props, ref) => {
+const Notifications = ({ref, ...props}: NotificationsProps & {ref?: React.Ref<HTMLDivElement>}) => {
   return (
     <div className="notifications_view" ref={ref}>
       {props.customChildrenBefore}
@@ -121,7 +121,7 @@ const Notifications = forwardRef<HTMLDivElement, NotificationsProps>((props, ref
       `}</style>
     </div>
   );
-});
+};
 
 Notifications.displayName = 'Notifications';
 

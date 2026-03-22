@@ -1,4 +1,4 @@
-import React, {forwardRef, useState} from 'react';
+import React, {useState} from 'react';
 
 import type {HeaderProps} from '../../typings/hyper';
 import {decorate, getTabsProps} from '../utils/plugins';
@@ -7,7 +7,7 @@ import Tabs_ from './tabs';
 
 const Tabs = decorate(Tabs_, 'Tabs');
 
-const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
+const Header = ({ref, ...props}: HeaderProps & {ref?: React.Ref<HTMLElement>}) => {
   const [headerMouseDownWindowX, setHeaderMouseDownWindowX] = useState<number>(0);
   const [headerMouseDownWindowY, setHeaderMouseDownWindowY] = useState<number>(0);
 
@@ -142,7 +142,7 @@ const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
           onChange: onChangeIntent,
           fullScreen: props.fullScreen,
           defaultProfile: props.defaultProfile,
-          profiles: props.profiles.asMutable({deep: true}),
+          profiles: props.profiles,
           openNewTab: props.openNewTab
         })}
       />
@@ -253,7 +253,7 @@ const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
       `}</style>
     </header>
   );
-});
+};
 
 Header.displayName = 'Header';
 

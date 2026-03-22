@@ -5,7 +5,6 @@ import {URL, fileURLToPath} from 'url';
 import {app, BrowserWindow, shell, Menu} from 'electron';
 import type {BrowserWindowConstructorOptions} from 'electron';
 
-import isDev from 'electron-is-dev';
 import {getWorkingDirectoryFromPID} from 'native-process-working-directory';
 import {v4 as uuidv4} from 'uuid';
 
@@ -24,6 +23,8 @@ import toElectronBackgroundColor from '../utils/to-electron-background-color';
 import {isSafeExternalUrl} from '../utils/url-validation';
 
 import contextMenuTemplate from './contextmenu';
+
+const isDev = !app.isPackaged;
 
 export function newWindow(
   options_: BrowserWindowConstructorOptions,

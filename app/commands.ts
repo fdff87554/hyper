@@ -1,5 +1,5 @@
-import {app, Menu} from 'electron';
-import type {BrowserWindow} from 'electron';
+import {app, BrowserWindow, Menu} from 'electron';
+import type {BaseWindow} from 'electron';
 
 import {openConfig, getConfig} from './config';
 import {updatePlugins} from './plugins';
@@ -162,9 +162,9 @@ getConfig().profiles.forEach((profile) => {
   };
 });
 
-export const execCommand = (command: string, focusedWindow?: BrowserWindow) => {
+export const execCommand = (command: string, focusedWindow?: BaseWindow) => {
   const fn = commands[command];
   if (fn) {
-    fn(focusedWindow);
+    fn(focusedWindow instanceof BrowserWindow ? focusedWindow : undefined);
   }
 };

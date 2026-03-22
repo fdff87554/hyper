@@ -5,7 +5,7 @@ import {resolve, join} from 'path';
 
 import {app} from 'electron';
 
-import isDev from 'electron-is-dev';
+const isDev = !app.isPackaged;
 
 const cfgFile = 'hyper.json';
 const defaultCfgFile = 'config-default.json';

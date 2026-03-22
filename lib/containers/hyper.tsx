@@ -1,4 +1,4 @@
-import React, {forwardRef, useEffect, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 
 import Mousetrap from 'mousetrap';
 import type {MousetrapInstance} from 'mousetrap';
@@ -16,7 +16,7 @@ import TermsContainer from './terms';
 
 const isMac = /Mac/.test(navigator.userAgent);
 
-const Hyper = forwardRef<HTMLDivElement, HyperProps>((props, ref) => {
+const Hyper = ({ref, ...props}: HyperProps & {ref?: React.Ref<HTMLDivElement>}) => {
   const mousetrap = useRef<MousetrapInstance | null>(null);
   const terms = useRef<Terms | null>(null);
 
@@ -133,7 +133,7 @@ const Hyper = forwardRef<HTMLDivElement, HyperProps>((props, ref) => {
       <style dangerouslySetInnerHTML={{__html: stylis('#hyper', customCSS)}} />
     </div>
   );
-});
+};
 
 Hyper.displayName = 'Hyper';
 

@@ -126,7 +126,7 @@ class TermGroup_ extends React.PureComponent<TermGroupProps> {
       return this.renderTerm(termGroup.sessionUid);
     }
 
-    const groups = childGroups.asMutable().map((child) => {
+    const groups = childGroups.map((child) => {
       const props = getTermGroupProps(
         child.uid,
         this.props.parentProps,

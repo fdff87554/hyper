@@ -1,8 +1,8 @@
-import React, {forwardRef} from 'react';
+import React from 'react';
 
 import type {StyleSheetProps} from '../../typings/hyper';
 
-const StyleSheet = forwardRef<HTMLStyleElement, StyleSheetProps>((props, ref) => {
+const StyleSheet = ({ref, ...props}: StyleSheetProps & {ref?: React.Ref<HTMLStyleElement>}) => {
   const {borderColor} = props;
 
   return (
@@ -20,7 +20,7 @@ const StyleSheet = forwardRef<HTMLStyleElement, StyleSheetProps>((props, ref) =>
       }
     `}</style>
   );
-});
+};
 
 StyleSheet.displayName = 'StyleSheet';
 

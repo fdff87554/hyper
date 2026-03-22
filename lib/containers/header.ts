@@ -1,4 +1,4 @@
-import {createSelector} from 'reselect';
+import {createSelector} from '@reduxjs/toolkit';
 
 import type {HyperState, HyperDispatch, ITab} from '../../typings/hyper';
 import {closeTab, changeTab, maximize, openHamburgerMenu, unmaximize, minimize, close} from '../actions/header';
