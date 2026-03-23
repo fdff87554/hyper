@@ -57,6 +57,38 @@ jobs:
       - name: Run Unit Tests
         run: yarn run test:unit
 
+  detect-dist-changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      should-run-dist: ${{ steps.check.outputs.should-run-dist }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for packaging-related changes
+        id: check
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'electron-builder*.json' \
+            'bin/notarize.js' \
+            '.github/workflows/**' \
+            'test/index.ts' \
+            'build/**' \
+            'app/package.json')
+          if [ -n "$CHANGED" ]; then
+            echo "should-run-dist=true" >> "$GITHUB_OUTPUT"
+            echo "Packaging-related files changed:"
+            echo "$CHANGED"
+          else
+            echo "should-run-dist=false" >> "$GITHUB_OUTPUT"
+            echo "No packaging-related files changed, skipping dist"
+          fi
+
   build-check:
     needs: lint
     if: github.event_name == 'pull_request'
@@ -75,8 +107,11 @@ jobs:
         run: yarn run build
 
   dist:
-    needs: test
-    if: github.event_name == 'push'
+    needs: [test, detect-dist-changes]
+    if: >-
+      always() &&
+      needs.test.result == 'success' &&
+      (github.event_name == 'push' || needs.detect-dist-changes.outputs.should-run-dist == 'true')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     permissions:
