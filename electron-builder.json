@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json.schemastore.org/electron-builder",
+  "$schema": "./node_modules/app-builder-lib/scheme.json",
   "appId": "dev.fdff87554.hyper",
   "afterSign": "./bin/notarize.js",
   "directories": {
@@ -11,31 +11,22 @@
     {
       "from": "./build/${os}/",
       "to": "./bin/",
-      "filter": [
-        "hyper*"
-      ]
+      "filter": ["hyper*"]
     }
   ],
   "artifactName": "${productName}-${version}-${arch}.${ext}",
   "linux": {
     "category": "TerminalEmulator",
-    "target": [
-      "deb",
-      "AppImage",
-      "rpm",
-      "snap",
-      "pacman"
-    ]
+    "target": ["deb", "AppImage", "rpm", "snap", "pacman"]
   },
   "win": {
     "target": {
       "target": "nsis",
-      "arch": [
-        "x64",
-        "arm64"
-      ]
+      "arch": ["x64", "arm64"]
     },
-    "rfc3161TimeStampServer": "http://timestamp.comodoca.com"
+    "signtoolOptions": {
+      "rfc3161TimeStampServer": "http://timestamp.comodoca.com"
+    }
   },
   "nsis": {
     "include": "build/win/installer.nsh",
@@ -46,10 +37,7 @@
   "mac": {
     "target": {
       "target": "default",
-      "arch": [
-        "x64",
-        "arm64"
-      ]
+      "arch": ["x64", "arm64"]
     },
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "category": "public.app-category.developer-tools",
@@ -72,9 +60,7 @@
           "CFBundleTypeName": "UnixExecutables",
           "CFBundleTypeRole": "Shell",
           "LSHandlerRank": "Alternate",
-          "LSItemContentTypes": [
-            "public.unix-executable"
-          ]
+          "LSItemContentTypes": ["public.unix-executable"]
         }
       ],
       "NSAppleEventsUsageDescription": "An application in Hyper wants to use AppleScript.",
@@ -104,10 +90,7 @@
   },
   "rpm": {
     "afterInstall": "./build/linux/after-install.tpl",
-    "fpm": [
-      "--rpm-rpmbuild-define",
-      "_build_id_links none"
-    ]
+    "fpm": ["--rpm-rpmbuild-define", "_build_id_links none"]
   },
   "snap": {
     "confinement": "classic",
@@ -115,8 +98,6 @@
   },
   "protocols": {
     "name": "ssh URL",
-    "schemes": [
-      "ssh"
-    ]
+    "schemes": ["ssh"]
   }
 }
