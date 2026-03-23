@@ -597,7 +597,6 @@ export default class Term extends React.PureComponent<
           }
 
           .term_wrapper {
-            /* TODO: decide whether to keep this or not based on understanding what xterm-selection is for */
             overflow: hidden;
           }
         `}</style>
