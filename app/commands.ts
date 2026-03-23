@@ -1,7 +1,7 @@
 import {app, BrowserWindow, Menu} from 'electron';
 import type {BaseWindow} from 'electron';
 
-import {openConfig, getConfig} from './config';
+import {openConfig, getConfig, subscribe} from './config';
 import {updatePlugins} from './plugins';
 import {installCLI} from './utils/cli-install';
 import * as systemContextMenu from './utils/system-context-menu';
@@ -146,21 +146,35 @@ const commands: Record<string, (focusedWindow?: BrowserWindow) => void> = {
   };
 });
 
-//Profile specific commands
-getConfig().profiles.forEach((profile) => {
-  commands[`window:new:${profile.name}`] = () => {
-    setTimeout(() => app.createWindow(undefined, undefined, profile.name), 0);
-  };
-  commands[`tab:new:${profile.name}`] = (focusedWindow) => {
-    focusedWindow?.rpc.emit('termgroup add req', {profile: profile.name});
-  };
-  commands[`pane:splitRight:${profile.name}`] = (focusedWindow) => {
-    focusedWindow?.rpc.emit('split request vertical', {profile: profile.name});
-  };
-  commands[`pane:splitDown:${profile.name}`] = (focusedWindow) => {
-    focusedWindow?.rpc.emit('split request horizontal', {profile: profile.name});
-  };
-});
+const PROFILE_COMMAND_PREFIXES = ['window:new:', 'tab:new:', 'pane:splitRight:', 'pane:splitDown:'];
+
+function registerProfileCommands() {
+  // Remove stale profile commands before re-registering
+  for (const key of Object.keys(commands)) {
+    if (PROFILE_COMMAND_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+      delete commands[key];
+    }
+  }
+
+  getConfig().profiles.forEach((profile) => {
+    commands[`window:new:${profile.name}`] = () => {
+      setTimeout(() => app.createWindow(undefined, undefined, profile.name), 0);
+    };
+    commands[`tab:new:${profile.name}`] = (focusedWindow) => {
+      focusedWindow?.rpc.emit('termgroup add req', {profile: profile.name});
+    };
+    commands[`pane:splitRight:${profile.name}`] = (focusedWindow) => {
+      focusedWindow?.rpc.emit('split request vertical', {profile: profile.name});
+    };
+    commands[`pane:splitDown:${profile.name}`] = (focusedWindow) => {
+      focusedWindow?.rpc.emit('split request horizontal', {profile: profile.name});
+    };
+  });
+}
+
+// Register profile commands initially and on config changes
+registerProfileCommands();
+subscribe(registerProfileCommands);
 
 export const execCommand = (command: string, focusedWindow?: BaseWindow) => {
   const fn = commands[command];
