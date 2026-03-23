@@ -79,7 +79,9 @@ jobs:
             '.github/workflows/**' \
             'test/index.ts' \
             'build/**' \
-            'app/package.json')
+            'package.json' \
+            'app/package.json' \
+            'yarn.lock')
           if [ -n "$CHANGED" ]; then
             echo "should-run-dist=true" >> "$GITHUB_OUTPUT"
             echo "Packaging-related files changed:"
