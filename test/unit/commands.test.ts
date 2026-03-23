@@ -3,13 +3,30 @@ import test from 'ava';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const proxyquire = require('proxyquire').noCallThru();
 
+type RpcCall = [string, ...unknown[]];
+
 function createMocks(profiles: {name: string}[]) {
   let subscribeFn: (() => void) | null = null;
+  const rpcCalls: RpcCall[] = [];
+  let createWindowCalls: unknown[][] = [];
+
+  // BrowserWindow must be a class so `instanceof` check in execCommand passes
+  class MockBrowserWindow {
+    rpc = {
+      emit: (...args: unknown[]) => {
+        rpcCalls.push(args as RpcCall);
+      }
+    };
+  }
 
   const mocks = {
     electron: {
-      app: {createWindow: () => {}},
-      BrowserWindow: class {},
+      app: {
+        createWindow: (...args: unknown[]) => {
+          createWindowCalls.push(args);
+        }
+      },
+      BrowserWindow: MockBrowserWindow,
       Menu: {getApplicationMenu: () => ({popup: () => {}})}
     },
     './config': {
@@ -26,88 +43,117 @@ function createMocks(profiles: {name: string}[]) {
 
   return {
     mocks,
+    MockBrowserWindow,
     getSubscribeFn: () => subscribeFn,
+    getRpcCalls: () => rpcCalls,
+    clearRpcCalls: () => {
+      rpcCalls.length = 0;
+    },
+    getCreateWindowCalls: () => createWindowCalls,
+    clearCreateWindowCalls: () => {
+      createWindowCalls = [];
+    },
     setProfiles: (newProfiles: {name: string}[]) => {
       mocks['./config'].getConfig = () => ({profiles: newProfiles, showHamburgerMenu: false});
     }
   };
 }
 
-test('registers profile commands for each profile in config', (t) => {
-  const {mocks} = createMocks([{name: 'dev'}, {name: 'prod'}]);
-  const {execCommand} = proxyquire('../../app/commands', mocks);
+test('registers profile commands that dispatch correct RPC events', (t) => {
+  const ctx = createMocks([{name: 'dev'}, {name: 'prod'}]);
+  const {execCommand} = proxyquire('../../app/commands', ctx.mocks);
+  const win = new ctx.MockBrowserWindow();
 
-  // execCommand should find these commands (they won't throw, meaning they exist)
-  // We verify by checking that execCommand doesn't silently skip (i.e., the command exists)
-  // Since we can't inspect the commands object directly, we verify via execCommand behavior
-  t.truthy(execCommand);
+  execCommand('tab:new:dev', win);
+  t.is(ctx.getRpcCalls().length, 1);
+  t.deepEqual(ctx.getRpcCalls()[0], ['termgroup add req', {profile: 'dev'}]);
 
-  // Verify all 4 command types are registered for each profile by calling them
-  // They should not throw when called without a window
-  t.notThrows(() => execCommand('window:new:dev'));
-  t.notThrows(() => execCommand('tab:new:dev'));
-  t.notThrows(() => execCommand('window:new:prod'));
-  t.notThrows(() => execCommand('tab:new:prod'));
-  t.notThrows(() => execCommand('pane:splitRight:dev'));
-  t.notThrows(() => execCommand('pane:splitDown:prod'));
+  ctx.clearRpcCalls();
+  execCommand('pane:splitRight:prod', win);
+  t.is(ctx.getRpcCalls().length, 1);
+  t.deepEqual(ctx.getRpcCalls()[0], ['split request vertical', {profile: 'prod'}]);
+
+  ctx.clearRpcCalls();
+  execCommand('pane:splitDown:dev', win);
+  t.is(ctx.getRpcCalls().length, 1);
+  t.deepEqual(ctx.getRpcCalls()[0], ['split request horizontal', {profile: 'dev'}]);
 });
 
-test('does not register commands for nonexistent profiles', (t) => {
-  const {mocks} = createMocks([{name: 'dev'}]);
-  proxyquire('../../app/commands', mocks);
+test('does not dispatch RPC for unregistered profile commands', (t) => {
+  const ctx = createMocks([{name: 'dev'}]);
+  const {execCommand} = proxyquire('../../app/commands', ctx.mocks);
+  const win = new ctx.MockBrowserWindow();
 
-  // Load fresh to verify - 'prod' should not exist
-  const {execCommand} = proxyquire('../../app/commands', mocks);
+  execCommand('tab:new:nonexistent', win);
+  t.is(ctx.getRpcCalls().length, 0, 'no RPC call for unregistered profile');
 
-  // execCommand with nonexistent profile should be a no-op (no command found)
-  // It doesn't throw either way, so we verify the static commands still work
-  t.notThrows(() => execCommand('window:new:nonexistent'));
-  t.notThrows(() => execCommand('tab:new:dev'));
+  execCommand('pane:splitRight:prod', win);
+  t.is(ctx.getRpcCalls().length, 0, 'no RPC call for absent profile');
 });
 
-test('cleans up stale profile commands when config changes', (t) => {
-  const {mocks, getSubscribeFn, setProfiles} = createMocks([{name: 'dev'}, {name: 'prod'}]);
-  const {execCommand} = proxyquire('../../app/commands', mocks);
+test('cleans up stale profile commands after config change', (t) => {
+  const ctx = createMocks([{name: 'dev'}, {name: 'prod'}]);
+  const {execCommand} = proxyquire('../../app/commands', ctx.mocks);
+  const win = new ctx.MockBrowserWindow();
 
-  // Initially both profiles should have commands
-  t.notThrows(() => execCommand('tab:new:dev'));
-  t.notThrows(() => execCommand('tab:new:prod'));
+  // Verify 'prod' command works initially
+  execCommand('tab:new:prod', win);
+  t.is(ctx.getRpcCalls().length, 1, 'prod command works before config change');
 
-  // Simulate config change: remove 'prod' profile
-  setProfiles([{name: 'dev'}]);
-  const subscribeFn = getSubscribeFn();
-  t.truthy(subscribeFn, 'subscribe should have been called during module load');
+  // Simulate config change: remove 'prod'
+  ctx.clearRpcCalls();
+  ctx.setProfiles([{name: 'dev'}]);
+  const subscribeFn = ctx.getSubscribeFn();
+  t.truthy(subscribeFn);
   subscribeFn!();
 
-  // 'dev' commands should still work, 'prod' should be cleaned up
-  // We can't directly check deletion, but we verify the subscribe mechanism works
-  t.notThrows(() => execCommand('tab:new:dev'));
+  // 'prod' command should no longer fire
+  execCommand('tab:new:prod', win);
+  t.is(ctx.getRpcCalls().length, 0, 'prod command removed after config change');
+
+  // 'dev' command should still work
+  execCommand('tab:new:dev', win);
+  t.is(ctx.getRpcCalls().length, 1, 'dev command still works after config change');
+  t.deepEqual(ctx.getRpcCalls()[0], ['termgroup add req', {profile: 'dev'}]);
 });
 
 test('subscribe is called during module initialization', (t) => {
-  const {mocks, getSubscribeFn} = createMocks([{name: 'default'}]);
-  proxyquire('../../app/commands', mocks);
+  const ctx = createMocks([{name: 'default'}]);
+  proxyquire('../../app/commands', ctx.mocks);
 
-  t.truthy(getSubscribeFn(), 'subscribe should capture the callback during module load');
+  t.truthy(ctx.getSubscribeFn(), 'subscribe callback captured during module load');
 });
 
-test('execCommand handles unknown commands gracefully', (t) => {
-  const {mocks} = createMocks([{name: 'default'}]);
-  const {execCommand} = proxyquire('../../app/commands', mocks);
+test('execCommand produces no side effects for unknown commands', (t) => {
+  const ctx = createMocks([{name: 'default'}]);
+  const {execCommand} = proxyquire('../../app/commands', ctx.mocks);
+  const win = new ctx.MockBrowserWindow();
 
-  // Unknown command should not throw
-  t.notThrows(() => execCommand('nonexistent:command'));
+  execCommand('completely:unknown:command', win);
+  t.is(ctx.getRpcCalls().length, 0, 'no RPC calls for unknown command');
 });
 
-test('static commands are registered regardless of profiles', (t) => {
-  const {mocks} = createMocks([]);
-  const {execCommand} = proxyquire('../../app/commands', mocks);
+test('registers all four command types per profile', (t) => {
+  const ctx = createMocks([{name: 'test'}]);
+  const {execCommand} = proxyquire('../../app/commands', ctx.mocks);
+  const win = new ctx.MockBrowserWindow();
 
-  // Core commands should exist even with empty profiles
-  t.notThrows(() => execCommand('window:new'));
-  t.notThrows(() => execCommand('tab:new'));
-  t.notThrows(() => execCommand('pane:close'));
-  t.notThrows(() => execCommand('zoom:in'));
-  t.notThrows(() => execCommand('zoom:out'));
-  t.notThrows(() => execCommand('zoom:reset'));
+  // tab:new triggers rpc.emit
+  execCommand('tab:new:test', win);
+  t.is(ctx.getRpcCalls().length, 1);
+  ctx.clearRpcCalls();
+
+  // pane:splitRight triggers rpc.emit
+  execCommand('pane:splitRight:test', win);
+  t.is(ctx.getRpcCalls().length, 1);
+  ctx.clearRpcCalls();
+
+  // pane:splitDown triggers rpc.emit
+  execCommand('pane:splitDown:test', win);
+  t.is(ctx.getRpcCalls().length, 1);
+  ctx.clearRpcCalls();
+
+  // window:new:test uses setTimeout(app.createWindow), doesn't call rpc.emit
+  execCommand('window:new:test', win);
+  t.is(ctx.getRpcCalls().length, 0, 'window:new uses setTimeout, not rpc.emit');
 });
