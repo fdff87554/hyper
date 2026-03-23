@@ -35,7 +35,8 @@ test.before(async () => {
   }
 
   app = await _electron.launch({
-    executablePath: pathToBinary
+    executablePath: pathToBinary,
+    args: process.platform === 'linux' ? ['--no-sandbox'] : []
   });
   await app.firstWindow();
   await new Promise((resolve) => setTimeout(resolve, 5000));
