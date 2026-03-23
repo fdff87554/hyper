@@ -101,7 +101,6 @@ const config: webpack.Configuration[] = [
       columnify: 'require("./node_modules/columnify/columnify.js")',
       lodash: 'require("./node_modules/lodash/lodash.js")',
       ms: 'require("./node_modules/ms/index.js")',
-      'php-escape-shell': 'require("./node_modules/php-escape-shell/php-escape-shell.js")',
       plist: 'require("./node_modules/plist/index.js")',
       'react-dom': 'require("./node_modules/react-dom/index.js")',
       'react-redux': 'require("./node_modules/react-redux/dist/cjs/index.js")',
