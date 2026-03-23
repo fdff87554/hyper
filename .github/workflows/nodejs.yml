@@ -57,6 +57,40 @@ jobs:
       - name: Run Unit Tests
         run: yarn run test:unit
 
+  detect-dist-changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      should-run-dist: ${{ steps.check.outputs.should-run-dist }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for packaging-related changes
+        id: check
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'electron-builder*.json' \
+            'bin/notarize.js' \
+            '.github/**' \
+            'test/index.ts' \
+            'build/**' \
+            'package.json' \
+            'app/package.json' \
+            'yarn.lock')
+          if [ -n "$CHANGED" ]; then
+            echo "should-run-dist=true" >> "$GITHUB_OUTPUT"
+            echo "Packaging-related files changed:"
+            echo "$CHANGED"
+          else
+            echo "should-run-dist=false" >> "$GITHUB_OUTPUT"
+            echo "No packaging-related files changed, skipping dist"
+          fi
+
   build-check:
     needs: lint
     if: github.event_name == 'pull_request'
@@ -75,8 +109,11 @@ jobs:
         run: yarn run build
 
   dist:
-    needs: test
-    if: github.event_name == 'push'
+    needs: [test, detect-dist-changes]
+    if: >-
+      always() &&
+      needs.test.result == 'success' &&
+      (github.event_name == 'push' || needs.detect-dist-changes.outputs.should-run-dist == 'true')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     permissions:
@@ -112,7 +149,8 @@ jobs:
           if [ -z "$WIN_CSC_LINK" ] ; then unset WIN_CSC_LINK ; fi
           if [ -z "$WIN_CSC_KEY_PASSWORD" ] ; then unset WIN_CSC_KEY_PASSWORD ; fi
           if [ -z "$APPLE_ID" ] ; then unset APPLE_ID ; fi
-          if [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ] ; then unset APPLE_APP_SPECIFIC_PASSWORD ; fi
+          if [ -z "$APPLE_PASSWORD" ] ; then unset APPLE_PASSWORD ; fi
+          if [ -z "$APPLE_TEAM_ID" ] ; then unset APPLE_TEAM_ID ; fi
           yarn run build && yarn run electron-builder --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -121,7 +159,8 @@ jobs:
           WIN_CSC_LINK: ${{ secrets.WIN_CERT_P12_BASE64 }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_P12_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       - name: Archive Build Artifacts
         uses: actions/upload-artifact@v4
         with:

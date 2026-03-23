@@ -12,25 +12,31 @@ let app: ElectronApplication;
 test.before(async () => {
   let pathToBinary;
 
+  // electron-builder 26 appends an arch suffix to output directories when the
+  // build arch differs from the platform default (e.g. "mac-arm64" on Apple
+  // Silicon when the default is x64). Detect the correct directory at runtime.
+  const archSuffix = process.arch === 'arm64' ? '-arm64' : '';
+
   switch (process.platform) {
     case 'linux':
-      pathToBinary = path.join(__dirname, '../dist/linux-unpacked/hyper');
+      pathToBinary = path.join(__dirname, `../dist/linux${archSuffix}-unpacked/hyper`);
       break;
 
     case 'darwin':
-      pathToBinary = path.join(__dirname, '../dist/mac/Hyper.app/Contents/MacOS/Hyper');
+      pathToBinary = path.join(__dirname, `../dist/mac${archSuffix}/Hyper.app/Contents/MacOS/Hyper`);
       break;
 
     case 'win32':
-      pathToBinary = path.join(__dirname, '../dist/win-unpacked/Hyper.exe');
+      pathToBinary = path.join(__dirname, `../dist/win${archSuffix}-unpacked/Hyper.exe`);
       break;
 
     default:
-      throw new Error('Path to the built binary needs to be defined for this platform in test/index.js');
+      throw new Error('Path to the built binary needs to be defined for this platform in test/index.ts');
   }
 
   app = await _electron.launch({
-    executablePath: pathToBinary
+    executablePath: pathToBinary,
+    args: process.platform === 'linux' ? ['--no-sandbox'] : []
   });
   await app.firstWindow();
   await new Promise((resolve) => setTimeout(resolve, 5000));
