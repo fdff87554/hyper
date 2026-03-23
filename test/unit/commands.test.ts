@@ -133,7 +133,7 @@ test('execCommand produces no side effects for unknown commands', (t) => {
   t.is(ctx.getRpcCalls().length, 0, 'no RPC calls for unknown command');
 });
 
-test('registers all four command types per profile', (t) => {
+test('registers all four command types per profile', async (t) => {
   const ctx = createMocks([{name: 'test'}]);
   const {execCommand} = proxyquire('../../app/commands', ctx.mocks);
   const win = new ctx.MockBrowserWindow();
@@ -153,7 +153,13 @@ test('registers all four command types per profile', (t) => {
   t.is(ctx.getRpcCalls().length, 1);
   ctx.clearRpcCalls();
 
-  // window:new:test uses setTimeout(app.createWindow), doesn't call rpc.emit
+  // window:new:test uses setTimeout(app.createWindow) -- flush timer and verify
   execCommand('window:new:test', win);
-  t.is(ctx.getRpcCalls().length, 0, 'window:new uses setTimeout, not rpc.emit');
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  t.is(ctx.getCreateWindowCalls().length, 1, 'app.createWindow called for window:new:test');
+  t.deepEqual(
+    ctx.getCreateWindowCalls()[0],
+    [undefined, undefined, 'test'],
+    'createWindow called with correct profile'
+  );
 });
