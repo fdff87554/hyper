@@ -76,7 +76,7 @@ jobs:
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
             'electron-builder*.json' \
             'bin/notarize.js' \
-            '.github/workflows/**' \
+            '.github/**' \
             'test/index.ts' \
             'build/**' \
             'package.json' \
