@@ -193,29 +193,33 @@ export function newWindow(
   }
 
   rpc.on('new', (extraOptions) => {
-    const {session, options} = createSession(extraOptions);
+    try {
+      const {session, options} = createSession(extraOptions);
 
-    sessions.set(options.uid, session);
-    rpc.emit('session add', {
-      rows: options.rows,
-      cols: options.cols,
-      uid: options.uid,
-      splitDirection: options.splitDirection,
-      shell: session.shell,
-      pid: session.pty ? session.pty.pid : null,
-      activeUid: options.activeUid ?? undefined,
-      profile: options.profile
-    });
+      sessions.set(options.uid, session);
+      rpc.emit('session add', {
+        rows: options.rows,
+        cols: options.cols,
+        uid: options.uid,
+        splitDirection: options.splitDirection,
+        shell: session.shell,
+        pid: session.pty ? session.pty.pid : null,
+        activeUid: options.activeUid ?? undefined,
+        profile: options.profile
+      });
 
-    session.on('data', (data: string) => {
-      rpc.emit('session data', data);
-    });
+      session.on('data', (data: string) => {
+        rpc.emit('session data', data);
+      });
 
-    session.on('exit', () => {
-      rpc.emit('session exit', {uid: options.uid});
-      unsetRendererType(options.uid);
-      sessions.delete(options.uid);
-    });
+      session.on('exit', () => {
+        rpc.emit('session exit', {uid: options.uid});
+        unsetRendererType(options.uid);
+        sessions.delete(options.uid);
+      });
+    } catch (err) {
+      console.error('Failed to create session:', err);
+    }
   });
 
   rpc.on('exit', ({uid}) => {

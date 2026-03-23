@@ -234,7 +234,11 @@ export default class Term extends React.PureComponent<
       }
 
       if (props.disableLigatures !== true && !useWebGL) {
-        this.term.loadAddon(new LigaturesAddon());
+        try {
+          this.term.loadAddon(new LigaturesAddon());
+        } catch (e) {
+          console.warn('Failed to load ligatures addon:', e);
+        }
       }
 
       this.term.loadAddon(new Unicode11Addon());
