@@ -4,7 +4,7 @@
 
 - **專案名稱**: Hyper
 - **專案簡述**: 基於 Web 技術的現代終端模擬器，fork 自 Vercel Hyper 進行持續維護與安全更新
-- **技術棧**: TypeScript 5.4.5, React 18.2.0, Redux 4.2.1, Electron 22.3.25, xterm.js 5.5.0, styled-jsx 5.1.2, Webpack 5.91.0, Babel 7.24.4, node-pty
+- **技術棧**: TypeScript 5.8.3, React 19.0.4, Redux Toolkit 2.11.2, react-redux 9.2.0, Electron 39.8.3, xterm.js 5.5.0, styled-jsx 5.1.7, Webpack 5.99.9, Babel 7.24.4, node-pty 1.1.0
 - **專案結構**:
 
 ```
