@@ -20,7 +20,13 @@ config.setup();
 import {resolve} from 'path';
 
 // Packages
-import {app, BrowserWindow, Menu, screen} from 'electron';
+import {app, BrowserWindow, Menu, nativeTheme, screen} from 'electron';
+
+// Ensure macOS traffic light buttons are visible against dark backgrounds.
+// Without this, inactive traffic lights use a semi-transparent dark color
+// that becomes invisible on black backgrounds.
+// See: https://github.com/electron/electron/issues/44034
+nativeTheme.themeSource = 'dark';
 
 const isDev = !app.isPackaged;
 import {gitDescribe} from 'git-describe';
